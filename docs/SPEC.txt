@@ -1,0 +1,754 @@
+Caught Up Build Spec
+
+
+
+
+  Caught Up Build Spec
+    Nov 8, 2026        ·   ​@Josh
+
+
+
+
+  Summary
+  Caught Up (working name) is a spoiler-free companion for TV series. You tell it the
+  episode you are on, and it explains who everyone is, what has happened and what you just
+  watched, using only what you have already seen.
+
+  The problem. Viewers return to a show after a long gap, or get lost mid-season, and search
+  for help. Fan wikis, search suggestions and recap articles reveal later events. A viewer
+  who just wants to know who a character is learns how that character dies.
+
+  The product promise. Nothing on screen ever comes from later than your position. That
+  promise is enforced by the data model and by an automated audit, not by spoiler
+  warnings.
+
+  Goals for version 1
+
+         Launch with one show (The Diplomat, Netflix) covering every released episode.
+         A viewer gets from opening the app to a useful answer in under 30 seconds.
+         Zero spoilers reported in the first 1,000 sessions.
+         Prove demand: 20% of first-time visitors return within 7 days.
+
+  How it relates to The Classics Companion. It reuses that app's core ideas: every fact is
+  tagged with the point where it is revealed, views are gated by the reader's position, an
+  audit scans for leaks, and the AI is grounded only in what has been reached. Episodes and
+  minutes replace chapters and paragraphs. The new project should copy the patterns, not
+  the code wholesale.
+
+
+  Users and core jobs
+  The core user is a viewer of a long, plot-heavy drama watching on a TV with a phone in
+  hand.
+
+
+     User                     Situation                             Job to be done
+
+     The returner             A new season starts after a one- or   "Catch me up on everything before
+                              two-year gap                          this season, fast."
+
+
+
+
+                                                                                                   Page 1 of 16
+Caught Up Build Spec
+
+
+
+
+     User              Situation                            Job to be done
+
+     The lost          Mid-episode, a name or plot point    "Who is this, and why does it
+     viewer            means nothing                        matter?" without pausing for long
+
+     The binger        Watching several episodes a night,   "Remind me what happened two
+                       details blur                         episodes ago."
+
+     The co-           Watching with a partner or family    Each person gets answers safe for
+     watcher           who are at different points          their own position
+
+     The finisher      Just finished an episode or the      "What did that ending mean?"
+                       season                               without reading reviews that discuss
+                                                            later seasons
+
+
+  Out of scope as users for version 1: people who have finished the whole show and want
+  full wikis, and critics.
+
+
+  Scope
+  Version 1 is a mobile-first web app for one show, with no accounts required.
+
+  MVP (version 1)
+
+         One show, every released episode, with episode-level gating and optional minute-
+         level gating inside an episode.
+         Position picker: season, episode, and "finished it" or "partway, about N minutes in".
+         Catch-up: a season-by-season recap up to your position, plus a short "previously" for
+         the next episode.
+         Who's who: character cards that show only facts revealed up to your position, with
+         search.
+         Relationship map that grows as you watch.
+         Episode guide: a recap card for each episode you have finished; later episodes show
+         only title, number and runtime.
+         "What just happened?" AI chat, grounded only in facts up to your position.
+         Position saved in the browser; a shareable link that carries a show and position but
+         never content.
+         Report a spoiler button on every card.
+
+  Later (version 2 and on)
+
+
+
+                                                                                            Page 2 of 16
+Caught Up Build Spec
+
+
+
+
+         Accounts and sync across devices; several profiles per household.
+         More shows, added one premiere at a time.
+         Places and organisations as cards; a timeline of in-story events.
+         Watch-party mode: a group is safe for its least-advanced member.
+         Native apps, a TV-remote friendly view, and detecting the episode from streaming
+         history where a platform allows it.
+         Community corrections with reveal tags.
+
+  Non-goals
+
+         No video, clips, scripts, subtitles or screenshots from the show.
+         No reviews, ratings or episode rankings.
+         No wiki for people who have finished the show.
+         No forums or open comments in version 1 (they leak spoilers).
+
+
+  Screens and user flows
+  Every screen shows the current position in a sticky bar at the top, and every screen reads
+  from that position.
+
+  First visit (the main flow)
+
+     1. Landing page for the show: one line of promise ("Catch up on The Diplomat without
+        spoilers") and one button.
+     2. Position picker: choose season, then episode, then "I've finished it" or "I'm partway"
+        with a minutes slider. Default suggestion: "About to start Season N" for the latest
+        season.
+     3. Home for that position, with three cards: Catch me up, Who's who, Ask.
+
+  Screens
+
+
+     Screen             What it shows                         Notes
+
+     Position bar       "S4 · E2 · 31 min" and a Change       Sticky; changing it re-renders
+                        button                                everything
+
+     Catch me up        Recap per finished season (5–8        Collapsible; a 60-second version at
+                        short paragraphs each), then per      the top
+                        finished episode of the current
+                        season
+
+
+
+                                                                                               Page 3 of 16
+Caught Up Build Spec
+
+
+
+
+     Screen             What it shows                         Notes
+
+     Previously on      The 5–8 threads that matter for the   Built from facts tagged as relevant
+                        next episode                          to that episode
+
+     Who's who          Grid of character cards, filter by    Characters not yet introduced do
+                        group (US, UK, Russia, family),       not exist on this screen
+                        search box
+
+     Character card     Name, actor, role as of now, 3–8      Each fact shows the episode it
+                        facts, relationships, "first seen"    came from
+                        episode
+
+     Relationship       Nodes and labelled lines, as of now   Lines appear and change label as
+     map                                                      you advance
+
+     Episode guide      List of episodes; finished ones       Unwatched ones show only
+                        expand to a recap                     number, title, runtime
+
+     Ask                Chat: "What just happened?", "Why     Answers cite episodes; refuses
+                        is Kate angry at Hal?"                questions about the future
+
+     Report             One tap on any card: "This spoiled    Feeds the review queue
+                        something" plus an optional note
+
+
+  Rules for every screen
+
+         Nothing renders until a position is set.
+         Titles of unwatched episodes are hidden by default, because titles can spoil. A setting
+         can reveal them.
+         Search only matches content revealed up to the position. A search for a later
+         character returns "No match yet", identical to a name that does not exist.
+         Moving the position backwards immediately hides later content.
+
+
+  The spoiler model
+  Every piece of content carries a reveal point, and the server only ever sends content
+  whose reveal point is at or before the viewer's position. This is the product; build it first
+  and test it hardest.
+
+  Position
+
+
+
+
+                                                                                               Page 4 of 16
+Caught Up Build Spec
+
+
+
+
+         A position is (season, episode, second) . "Finished episode" = the episode's
+         runtime in seconds.
+         Positions compare as a single ordinal: ord = episodeIndex * 100000 + second ,
+         where episodeIndex counts every episode of the show in release order (S1E1 = 0).
+         "Before the season" = the ordinal of the previous season's last episode, finished.
+
+  Reveal point
+
+         Every fact, recap paragraph, relationship, character introduction and episode title has
+         a revealAt position.
+         Most facts reveal at the end of the episode ( second = runtime ). A fact may reveal
+         mid-episode only when its exact minute is recorded and checked.
+         When in doubt, reveal later. A fact shown an episode late costs nothing; one shown a
+         minute early breaks the promise.
+
+  Gating rules
+
+     1. Gate on the server. The client never receives content past the position, so nothing can
+         leak through page source, network tools or a cached response.
+     2. A character card exists only once its introducedAt is reached. Before that, the name
+         is unknown to every screen, including search.
+     3. A character's role line is versioned: each version has its own revealAt ("Ambassador
+         to the UK" then later titles). The latest version reached is shown.
+     4. Relationships are versioned the same way (allies, then rivals). A relationship ending is
+        its own reveal.
+     5. Images: the cast photo is safe from the character's introduction; never show photos
+         from later episodes (costume, injuries).
+     6. Cache keys include the position ordinal. Never cache a page by show alone.
+
+  The spoiler audit (runs in CI and before every publish)
+
+         Reference check: every fact that mentions another character must have revealAt at
+         or after that character's introducedAt .
+         Rule check: each show has a list of key events (deaths, betrayals, reveals, who-did-it),
+         each with a pattern and a revealAt . Every text visible at a position is scanned; a
+         pattern match before its revealAt fails the build. Same as the Classics Companion's
+         spoiler rules.
+         Always-visible check: show descriptions, episode titles shown by setting, character
+         names and role lines are checked against every rule at position zero.
+
+
+
+                                                                                               Page 5 of 16
+Caught Up Build Spec
+
+
+
+
+         AI output check: sampled AI answers are scanned with the same rules (see the AI
+         section).
+         A failed audit blocks publishing. There is no override flag.
+
+
+  Data model
+  Show content lives as typed files in the repository (like the Classics Companion's editorial
+  modules), compiled into the database at build time. User data lives in the database.
+
+  Content types (TypeScript, one folder per show)
+
+     type Position = { season: number; episode: number; second: number };
+
+
+     interface Show { slug: string; title: string; network: string; seasons:
+     Season[]; status: "airing" | "ended" }
+     interface Season { number: number; episodes: Episode[] }
+     interface Episode { season: number; number: number; title: string;
+     runtimeSec: number; releasedOn: string }
+
+
+     interface Character {
+       id: string;              // "kate-wyler"
+       name: string;            // as the show names them
+       actor: string;
+       introducedAt: Position; // the card does not exist before this
+       roles: { text: string; revealAt: Position }[];
+       facts: Fact[];
+       imageId?: string;        // licensed headshot, from introduction
+       group?: string;          // "US embassy", "White House", "UK government"
+     }
+
+
+     interface Fact {
+       id: string;
+       text: string;            // one or two plain sentences
+       revealAt: Position;
+       mentions: string[];      // character ids referenced in the text
+       source: SourceRef[];     // where it was verified
+       status: "draft" | "verified" | "published";
+     }
+
+
+     interface Relationship { a: string; b: string; versions: { label: string;
+     kind: "family" | "romance" | "work" | "alliance" | "conflict"; revealAt:
+     Position }[] }
+
+
+
+                                                                                         Page 6 of 16
+Caught Up Build Spec
+
+
+
+
+     interface EpisodeRecap { season: number; episode: number; short: string;
+     long: string; previously: string[] }
+     interface SeasonRecap { season: number; sixtySeconds: string; full: string[]
+     }
+     interface SpoilerRule { name: string; pattern: RegExp; revealAt: Position }
+     interface SourceRef { kind: "official-synopsis" | "episode-viewing" | "press"
+     | "reviewer"; ref: string; checkedBy: string; checkedOn: string }
+
+
+  Database tables (Postgres)
+
+
+     Table             Key columns                              Purpose
+
+     shows,            slug; (show, season, episode),           Structure and ordinals
+     episodes          runtime, ord
+
+     content_items     id, show, kind, body_json, reveal_ord,   Compiled facts, recaps, roles,
+                       status, version                          relationships
+
+     users             id, email (optional)                     Version 2; anonymous ids before
+                                                                that
+
+     positions         user, show, ord, updated_at              Saved position per show
+
+     spoiler_reports   id, content_id, position_ord, note,      Review queue
+                       created_at, status
+
+     ai_logs           id, show, position_ord, question,        Audit sampling, 30-day
+                       answer, flagged                          retention
+
+
+  Every content query has the form WHERE show = ? AND reveal_ord <= ? AND status =
+  'published' . Index (show, reveal_ord) .
+
+
+
+  Content pipeline
+  Accuracy is the hardest problem: fans notice every mistake, and a wrong reveal tag is a
+  spoiler. Content is drafted with AI, verified by a person who has watched the episode, and
+  gated by the audit.
+
+  Sources, in order of trust
+
+     1. A person watching the episode with notes (the only source allowed to set a mid-
+        episode reveal minute).
+     2. Official synopses from the network's press site and the streaming page.
+
+
+
+                                                                                             Page 7 of 16
+Caught Up Build Spec
+
+
+
+
+     3. Published episode recaps from established outlets, used to cross-check, never
+        copied.
+     4. AI drafts: never a source on their own.
+
+  Never use subtitles, scripts or transcripts as stored content; they are copyrighted.
+  Paraphrase everything in original words.
+
+  Steps per episode
+
+     1. Structure: add the episode with title, runtime and release date.
+     2. Draft: an AI model drafts the recap, "previously" threads, new facts, role changes and
+        relationship changes. Its prompt contains only material from this episode and earlier,
+        and the instruction to tag each item with the earliest episode it is revealed in.
+     3. Watch and verify: a reviewer watches the episode with the draft open, corrects facts,
+        sets reveal tags (moving any doubtful tag later), and adds spoiler rules for key events.
+     4. Cross-check: compare against the official synopsis and at least one published recap;
+         each fact records its sources.
+     5. Audit: run the spoiler audit. Fix and repeat until it passes.
+     6. Publish: status becomes published; content compiles to the database.
+
+  Targets per episode: 1 short recap (60–80 words), 1 long recap (250–400 words), 3–6
+  "previously" threads, 5–15 facts, all role and relationship changes. Roughly 2–3 hours of
+  reviewer time per one-hour episode.
+
+  Corrections: spoiler reports and accuracy reports enter a queue; a spoiler report hides
+  the item at once until reviewed.
+
+
+  Gated AI assistant
+  The assistant answers only from published content revealed up to the viewer's position.
+  The model's own knowledge of the show is treated as the biggest spoiler risk in the
+  product.
+
+  Grounding
+
+         Build the context on the server from content items with reveal_ord <= position :
+         season recaps, episode recaps, facts, roles and relationships. No web search, no tools.
+         Context is small (one show, a few hundred items), so send the relevant subset
+         directly; retrieval by character mention and episode is enough. Cache the stable part
+         of the prompt per show and position band.
+
+
+
+
+                                                                                          Page 8 of 16
+Caught Up Build Spec
+
+
+
+
+         Model: the latest Claude model available through the Anthropic API, using the official
+         SDK, streaming responses.
+
+  System prompt rules (summarised)
+
+         You are a spoiler-free companion for {show}. The viewer is at {position}.
+         Answer only from the provided notes. If the notes do not answer the question, say
+         you don't know yet and suggest a related answered question.
+         Never use your own knowledge of the show, its actors' later work, interviews or future
+         seasons, even if you are certain.
+         Never speculate about what happens next, never hint ("keep watching!", "you'll see"),
+         and never confirm or deny guesses about the future.
+         Cite the episode for each claim, like (S2E3).
+
+  Guardrails
+
+         Questions about the future ("Does Hal die?") get a fixed, neutral reply that reveals
+         nothing, including no change in tone.
+         Every answer is scanned with the show's spoiler rules before it is sent; a match
+         replaces the answer with the neutral reply and logs it.
+         A weekly evaluation runs a set of trick questions per show (for example "Who is
+         behind the attack?" asked at each season start) and fails if any answer leaks.
+         Rate limits per visitor and a monthly cost budget, as in the Classics Companion.
+
+
+  Architecture, stack and routes
+  Use the same proven stack as the Classics Companion so patterns transfer directly: a
+  server-rendered Next.js app where the position is part of every request.
+
+
+     Layer             Choice                                Why
+
+     App               Next.js 15 (App Router), React 19,    Server rendering keeps gated
+                       TypeScript strict                     content on the server
+
+     Styling           Tailwind CSS 4                        Same as the classics app
+
+     Data              Postgres (Supabase) with Prisma       Content tables + positions; row-
+                                                             level security for user data
+
+
+
+
+                                                                                            Page 9 of 16
+Caught Up Build Spec
+
+
+
+
+     Layer             Choice                                Why
+
+     Content           Typed files per show in               Reviewable in pull requests; audit
+     source             content/<show>/ , compiled by a      runs on them
+                       script
+
+     AI                Anthropic API, official TypeScript    Grounded assistant
+                       SDK, streaming
+
+     Images            Licensed cast headshots via a movie   No screenshots from the show
+                       database API (for example TMDB),
+                       cached with attribution
+
+     Hosting           Vercel                                Same as today
+
+     Tests             Vitest (unit, content, audit),        Same as today
+                       Playwright + axe (end to end,
+                       accessibility)
+
+
+  Routes
+
+
+
+
+                                                                                            Page 10 of 16
+Caught Up Build Spec
+
+
+
+
+     Route                                             Purpose
+
+      /                                                Show picker (one show in version 1)
+
+      /s/[show]                                        Show landing + position picker
+
+      /s/[show]/at/[pos]                               Home at a position, e.g. /s/the-
+                                                       diplomat/at/s4e2-1860
+
+      /s/[show]/at/[pos]/catch-up                      Season and episode recaps
+
+      /s/[show]/at/[pos]/people and                    Who's who and character cards
+      /people/[id]
+
+      /s/[show]/at/[pos]/map                           Relationship map
+
+      /s/[show]/at/[pos]/episodes                      Episode guide
+
+      POST /api/ask                                    Body: show, position, question; streams an
+                                                       answer
+
+      POST /api/report                                 Spoiler or accuracy report
+
+      PUT /api/position                                Save position (anonymous id cookie, or
+                                                       account)
+
+
+  Position lives in the URL so links are shareable and caches are keyed correctly. A shared
+  link opens the position picker first, pre-filled, so a friend who is behind is never dropped
+  into later content.
+
+  Content build: npm run content:build validates every show file against the types, runs
+  the spoiler audit, and writes content_items . CI runs it on every pull request.
+
+
+
+  Legal, rights and trust
+  The product publishes original commentary about shows, which recap sites and fan wikis
+  already do; it must never host the shows' own material. Get a media lawyer's opinion
+  before public launch.
+
+          Allowed: original summaries, character descriptions and analysis in our own words;
+          show and character names; short factual statements.
+          Not allowed: video, stills, screenshots, scripts, subtitles, long or frequent dialogue
+          quotes, music, logos, key art.
+
+
+
+                                                                                                Page 11 of 16
+Caught Up Build Spec
+
+
+
+
+         Quotes: at most one short line of dialogue per episode recap, only where the line is
+         itself the plot point.
+         Images: actor headshots only through a licensed API with its attribution and terms;
+         remove on request.
+         Branding: an "Unofficial companion, not affiliated with Netflix or the show's
+         producers" line in the footer; never imitate the network's design or logo.
+         Trademarks: show names used to describe what the page is about only, never as our
+         product name.
+         Takedowns: a published contact address and a process to remove content within 48
+         hours.
+         Privacy: no account needed; anonymous position cookie; AI questions logged for 30
+         days for spoiler audits, then deleted; say this on an About page.
+         Trust signals: "Every fact is checked by someone who watched the episode" and a
+         visible report button. One public spoiler incident can sink the brand, so treat spoiler
+         reports like outages.
+
+
+  Monetization and growth
+  Grow on search traffic around premieres; earn from a small subscription once the
+  catalogue holds several shows.
+
+  Growth
+
+         Premiere timing: publish a show's "catch up before Season N" page 3–4 weeks before
+         each premiere, when searches for "[show] recap" peak.
+         Search pages: one public, indexable, spoiler-safe page per show per season start, e.g.
+         "The Diplomat recap before Season 4, no spoilers". These pages contain only content
+         revealed before that season.
+         Communities: answer "I'm lost, who is X?" posts in show subreddits and forums with
+         links to the right position.
+         Sharing: "I'm on S2E4, catch me up" links that open the picker pre-filled.
+
+  Revenue (in order)
+
+     1. Free during the pilot; measure return visits and asks per session.
+     2. A subscription around $3 a month or $20 a year: unlimited Ask, all shows, several
+         household profiles, watch-party mode. Catch-up pages and who's who stay free.
+     3. A one-off "season pass" per show for casual users (around $2).
+
+
+
+                                                                                            Page 12 of 16
+Caught Up Build Spec
+
+
+
+
+     4. Later: affiliate links to the streaming service, if allowed; no ads inside the reading
+        experience.
+
+  What to measure
+
+
+     Metric                                     Target for the pilot
+
+     Time from landing to first answer          under 30 seconds
+
+     Return within 7 days                       20% of first-time visitors
+
+     Questions asked per session                2 or more
+
+     Spoiler reports confirmed                  0
+
+     Accuracy reports confirmed                 under 1 per 1,000 sessions
+
+
+
+
+  Pilot show: The Diplomat
+  The pilot is The Diplomat (Netflix, created by Debora Cahn): a dense political thriller with
+  a large cast, long gaps between seasons, and a new season that has just come out. That
+  makes it a perfect test of the catch-up job.
+
+  Structure to load first
+
+
+     Season            Episodes   Released
+
+     4                 8          15 Oct 2026
+
+     3                 8          Oct 2025
+
+     2                 6          Oct 2024
+
+     1                 8          Apr 2023
+
+
+  Episode counts and dates come from search results and must be confirmed against the
+  Netflix listing before content work starts.
+
+  Content order: Seasons 1–3 first, so the "before Season 4" catch-up page ships within two
+  weeks. Then Season 4 episode by episode, staying ahead of the slowest viewers.
+
+
+
+
+                                                                                             Page 13 of 16
+Caught Up Build Spec
+
+
+
+
+  Starter cast list (introductions and roles to verify per episode): Kate Wyler (Keri Russell),
+  Hal Wyler (Rufus Sewell), Grace Penn (Allison Janney), President Rayburn (Michael
+  McKean), Nicol Trowbridge (Rory Kinnear), Austin Dennison (David Gyasi), Stuart Hayford
+  (Ato Essandoh), Eidra Park (Ali Ahn), Billie Appiah (Nana Mensah), Margaret Roylin (Celia
+  Imrie), Todd Penn (Bradley Whitford), Callum Ellis (Aidan Turner).
+
+  Spoiler rules to write first (key events of Seasons 1–3, each with the episode that reveals
+  it; names only here, patterns in the show files):
+
+         Who was behind the attack on the British warship, and who suggested it.
+         The car bomb at the end of Season 1, and who died in it.
+         The President's death and who takes office.
+         Who becomes Vice President.
+         Margaret Roylin's fate.
+         The state of Kate and Hal's marriage, which changes several times.
+         The submarine weapon and who may have taken it.
+
+  Season 4 rules are added as each Season 4 episode is reviewed. Nobody writing Season 1–
+  3 content should read Season 4 material first.
+
+  References to check against: Netflix Tudum: before Season 4, Netflix Tudum: Season 2
+  ending, TVLine: Season 3 finale, Deadline: Season 4 date. These were found by search and
+  not yet read in full.
+
+
+  Testing and acceptance criteria
+  Version 1 ships when every check below passes in CI and on a real phone.
+
+  Automated
+
+         Content build: every show file type-checks; every fact has at least one source and a
+         reveal point inside the show's episode range.
+         Spoiler audit: reference, rule, always-visible checks pass with zero findings.
+         Gating unit tests: for every episode boundary, the API returns nothing with
+         reveal_ord above the position (property test across random positions).
+         Search test: querying a character before their introduction returns the same
+         response as a nonsense name.
+         Cache test: two requests for the same page at different positions never share a
+         cached response.
+
+
+
+                                                                                           Page 14 of 16
+Caught Up Build Spec
+
+
+
+
+         AI evaluation: 50 trick questions per season start, zero leaks; answers cite episodes.
+         End-to-end (Playwright): first visit to answer in under 30 seconds; moving the position
+         back hides later cards; shared link opens the picker pre-filled.
+         Accessibility: axe finds no WCAG 2.2 A/AA violations on every screen; works at 375px
+         wide and in dark mode.
+
+  Manual
+
+         A reviewer who has seen only through Season 3 uses the app at "before Season 4" and
+         confirms nothing surprised them.
+         A fresh viewer who has seen only Season 1 Episode 1 browses every screen at that
+         position and confirms nothing leaked.
+         Spot-check 20 random facts against the episodes.
+
+  Definition of done for any new episode: drafted, watched and verified, cross-checked,
+  audit green, published, and the "previously" for the next episode updated.
+
+
+  Milestones and open questions
+  The pilot takes about eight weeks for one developer working with Claude Code plus one
+  part-time reviewer, and each phase ends at a gate that must pass before the next starts.
+
+
+
+
+                                                                                           Page 15 of 16
+Caught Up Build Spec
+
+
+
+
+  build roadmap · 5 phases, about 8 weeks
+
+  The first two weeks build no screens at all: gating and the audit come first, because every
+  later phase depends on them.
+
+  Open questions
+
+         Product name: "Caught Up" is a working name; check trademark and domain
+         availability.
+         Reviewer: who watches and verifies each episode, and how are they paid?
+         Minute-level gating: worth the reviewer time in version 1, or episode-level only at
+         launch?
+         Images: is a licensed headshot API acceptable to the lawyer, or launch text-only?
+         Second show: which premiere in the next six months has the biggest catch-up
+         demand?
+
+
+
+
+                                                                                               Page 16 of 16
+
