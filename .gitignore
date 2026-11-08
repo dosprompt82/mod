@@ -6,3 +6,4 @@ coverage
 .content-build
 .data
 .env*
+.demo
