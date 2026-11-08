@@ -1,0 +1,49 @@
+{
+  "id": "02-rate-cut-large-fee",
+  "description": "Same loan, rate cut 50 bps plus large consent fee",
+  "input": {
+    "modificationDate": "2025-01-01",
+    "originalEffectiveRate": "0.06",
+    "originalTerms": {
+      "principalOutstanding": "10000000",
+      "currency": "USD",
+      "rateType": "fixed",
+      "fixedRate": "0.06",
+      "paymentFrequency": "annual",
+      "dayCount": "30/360",
+      "amortization": {
+        "type": "bullet"
+      },
+      "maturityDate": "2030-01-01"
+    },
+    "newTerms": {
+      "principalOutstanding": "10000000",
+      "currency": "USD",
+      "rateType": "fixed",
+      "fixedRate": "0.055",
+      "paymentFrequency": "annual",
+      "dayCount": "30/360",
+      "amortization": {
+        "type": "bullet"
+      },
+      "maturityDate": "2030-01-01"
+    },
+    "feesPaidToLender": [
+      {
+        "amount": "1300000",
+        "description": "Consent fee"
+      }
+    ]
+  },
+  "expected": {
+    "conclusion": "extinguishment",
+    "scenarios": [
+      {
+        "pvOld": 9998659.73,
+        "pvNew": 11088053.83,
+        "pctChange": 10.8954
+      }
+    ],
+    "controllingPctChange": 10.8954
+  }
+}

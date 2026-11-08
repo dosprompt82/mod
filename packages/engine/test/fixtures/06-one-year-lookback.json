@@ -1,0 +1,60 @@
+{
+  "id": "06-one-year-lookback",
+  "description": "Prior modification 7/1/2024 (8.25% -> 6%) within 12 months; now 6% -> 5.5%; lookback changes the answer",
+  "input": {
+    "modificationDate": "2025-01-01",
+    "originalEffectiveRate": "0.06",
+    "originalTerms": {
+      "principalOutstanding": "10000000",
+      "currency": "USD",
+      "rateType": "fixed",
+      "fixedRate": "0.06",
+      "paymentFrequency": "annual",
+      "dayCount": "30/360",
+      "amortization": {
+        "type": "bullet"
+      },
+      "maturityDate": "2030-01-01"
+    },
+    "newTerms": {
+      "principalOutstanding": "10000000",
+      "currency": "USD",
+      "rateType": "fixed",
+      "fixedRate": "0.055",
+      "paymentFrequency": "annual",
+      "dayCount": "30/360",
+      "amortization": {
+        "type": "bullet"
+      },
+      "maturityDate": "2030-01-01"
+    },
+    "priorModificationsWithin1Year": [
+      {
+        "modificationDate": "2024-07-01",
+        "termsBefore": {
+          "principalOutstanding": "10000000",
+          "currency": "USD",
+          "rateType": "fixed",
+          "fixedRate": "0.0825",
+          "paymentFrequency": "annual",
+          "dayCount": "30/360",
+          "amortization": {
+            "type": "bullet"
+          },
+          "maturityDate": "2030-01-01"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "conclusion": "extinguishment",
+    "scenarios": [
+      {
+        "pvOld": 10946386.3,
+        "pvNew": 9788053.83,
+        "pctChange": 10.5819
+      }
+    ],
+    "controllingPctChange": 10.5819
+  }
+}

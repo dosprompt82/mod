@@ -1,0 +1,46 @@
+{
+  "id": "04-floating-spread-floor",
+  "description": "Floating SOFR loan: spread 250->200 bps, 4.50% index floor added; index 4.30% held flat",
+  "input": {
+    "modificationDate": "2025-01-01",
+    "originalEffectiveRate": "0.0705",
+    "originalTerms": {
+      "principalOutstanding": "25000000",
+      "rateType": "floating",
+      "index": "SOFR",
+      "spread": "0.025",
+      "indexRateAtModificationDate": "0.043",
+      "paymentFrequency": "quarterly",
+      "dayCount": "ACT/360",
+      "maturityDate": "2028-01-01"
+    },
+    "newTerms": {
+      "principalOutstanding": "25000000",
+      "rateType": "floating",
+      "index": "SOFR",
+      "spread": "0.02",
+      "indexRateAtModificationDate": "0.043",
+      "floor": "0.045",
+      "paymentFrequency": "quarterly",
+      "dayCount": "ACT/360",
+      "maturityDate": "2028-01-01"
+    },
+    "feesPaidToLender": [
+      {
+        "amount": "100000",
+        "description": "Amendment fee"
+      }
+    ]
+  },
+  "expected": {
+    "conclusion": "modification",
+    "scenarios": [
+      {
+        "pvOld": 25015819.65,
+        "pvNew": 24911248.12,
+        "pctChange": 0.418
+      }
+    ],
+    "controllingPctChange": 0.418
+  }
+}

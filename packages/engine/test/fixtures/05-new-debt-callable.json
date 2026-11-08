@@ -1,0 +1,57 @@
+{
+  "id": "05-new-debt-callable",
+  "description": "New debt at 3.50% callable by issuer 1/1/2027 at 101; smaller-change scenario controls",
+  "input": {
+    "modificationDate": "2025-01-01",
+    "originalEffectiveRate": "0.06",
+    "originalTerms": {
+      "principalOutstanding": "10000000",
+      "currency": "USD",
+      "rateType": "fixed",
+      "fixedRate": "0.06",
+      "paymentFrequency": "annual",
+      "dayCount": "30/360",
+      "amortization": {
+        "type": "bullet"
+      },
+      "maturityDate": "2030-01-01"
+    },
+    "newTerms": {
+      "principalOutstanding": "10000000",
+      "currency": "USD",
+      "rateType": "fixed",
+      "fixedRate": "0.035",
+      "paymentFrequency": "annual",
+      "dayCount": "30/360",
+      "amortization": {
+        "type": "bullet"
+      },
+      "maturityDate": "2030-01-01",
+      "callOptions": [
+        {
+          "holder": "issuer",
+          "exerciseDates": [
+            "2027-01-01"
+          ],
+          "price": "1.01"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "conclusion": "modification",
+    "scenarios": [
+      {
+        "pvOld": 9998659.73,
+        "pvNew": 8945630.22,
+        "pctChange": 10.5317
+      },
+      {
+        "pvOld": 9998659.73,
+        "pvNew": 9630651.48,
+        "pctChange": 3.6806
+      }
+    ],
+    "controllingPctChange": 3.6806
+  }
+}
