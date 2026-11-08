@@ -1,5 +1,5 @@
 /**
- * The Diplomat (Netflix): pilot show. Seasons 1–3 content; Season 4 is structure only.
+ * The Diplomat (Netflix): pilot show. Seasons 1–4 content.
  *
  * Sourcing (DECISIONS D-016): facts are paraphrased from per-episode summaries on Wikipedia
  * ("The Diplomat (American TV series)", episode tables, retrieved 2026-11-08). Each summary covers one
@@ -53,6 +53,12 @@ const characters: Character[] = [
     fact(2, 6, "She tells Stuart she now wants to become vice president.", ["stuart-hayford"]),
     fact(3, 2, "Passed over for vice president, she stays in London as ambassador instead of moving back to Washington with Hal.", ["hal-wyler"]),
     fact(3, 7, "She apologises for the Courageous attack to Frances Munning, Winfield House's British residence manager.", ["frances-munning"]),
+    fact(4, 1, "She breaks things off with Callum and privately renews her vows with Hal in a church at Windsor.", ["callum-ellis", "hal-wyler"]),
+    fact(4, 4, "She tells Robyn Palmer what Roylin did and how Trowbridge reacted, which helps bring Trowbridge down.", ["robyn-palmer", "margaret-roylin", "nicol-trowbridge"]),
+    fact(4, 5, "She is sleeping and eating badly and feels unwell; Todd guesses she is pregnant.", ["todd-penn"]),
+    fact(4, 6, "She tells Stuart and Eidra the truth about the weapon and that Penn, not Rayburn, planned the Courageous attack with Roylin.", ["stuart-hayford", "eidra-park", "grace-penn", "margaret-roylin"]),
+    fact(4, 6, "She lies to Penn, saying the new Prime Minister agreed to withdraw permission for the Russians.", ["grace-penn", "bethan-vaughn"]),
+    fact(4, 8, "She resigns in public at the G7, and Appiah and Ganon follow.", ["billie-appiah", "miguel-ganon"]),
   ], "US embassy"),
   character("hal-wyler", "Hal Wyler", "Rufus Sewell", [1, 1], [
     [1, 1, "Career diplomat; Kate's husband"],
@@ -66,6 +72,9 @@ const characters: Character[] = [
     fact(2, 3, "He reacts badly to fireworks at the Independence Day party, and Kate comforts him.", ["kate-wyler"]),
     fact(3, 2, "In a 2010 flashback he is US ambassador to Iraq, Kate works for him, and he proposes to her.", ["kate-wyler"]),
     fact(3, 4, "As vice president he gets the UNCLOS treaty ratified.", []),
+    fact(4, 2, "He serves as acting president while Penn is in surgery and drafts remarks in case she dies.", ["grace-penn"]),
+    fact(4, 3, "He bluntly tells Trowbridge that the Penn administration took the weapon.", ["nicol-trowbridge"]),
+    fact(4, 4, "He suggests Kate pressure Trowbridge with the tape of him attacking Roylin.", ["kate-wyler", "nicol-trowbridge", "margaret-roylin"]),
   ], "US embassy"),
   character("president-rayburn", "President William Rayburn", "Michael McKean", [1, 1], [[1, 1, "President of the United States"]], [
     fact(1, 3, "Kate convinces him Iran was not behind the carrier attack.", ["kate-wyler"]),
@@ -75,6 +84,7 @@ const characters: Character[] = [
   character("billie-appiah", "Billie Appiah", "Nana Mensah", [1, 1], [[1, 1, "White House chief of staff"]], [
     fact(1, 1, "She asks Stuart to prepare Kate as a possible replacement for the Vice President.", ["stuart-hayford", "kate-wyler"]),
     fact(1, 4, "She and Stuart once ran campaigns together.", ["stuart-hayford"]),
+    fact(4, 2, "She privately questions whether Hal should hand power back to Penn so soon after surgery.", ["hal-wyler", "grace-penn"]),
   ], "White House"),
   character("stuart-hayford", "Stuart Hayford", "Ato Essandoh", [1, 1], [[1, 1, "Deputy chief of mission, US Embassy London"]], [
     fact(1, 4, "A former campaign manager, he joined the Foreign Service to get away from Washington politics.", []),
@@ -83,12 +93,16 @@ const characters: Character[] = [
     fact(2, 1, "He survives the London attack but loses his memory of the events just before it.", []),
     fact(2, 2, "He blames Kate for Ronnie's death.", ["kate-wyler", "ronnie-buckhurst"]),
     fact(2, 4, "He walks back his negative assessment of Kate to Appiah.", ["billie-appiah", "kate-wyler"]),
+    fact(4, 7, "He tells Appiah he knows Penn planned the Courageous attack.", ["billie-appiah", "grace-penn"]),
+    fact(4, 8, "He prepares a formal dissent against Penn's foreign policy and is recalled to Washington.", ["grace-penn"]),
   ], "US embassy"),
   character("eidra-park", "Eidra Park", "Ali Ahn", [1, 1], [[1, 1, "CIA station chief, London"]], [
     fact(2, 1, "She tells Kate she will investigate the Prime Minister quietly to protect her.", ["kate-wyler", "nicol-trowbridge"]),
     fact(2, 2, "She keeps Roylin under CIA protection to get more information out of her.", ["margaret-roylin"]),
     fact(2, 4, "She had Stuart tested by a CIA officer over concerns about his mental state, and recorded it.", ["stuart-hayford"]),
     fact(3, 2, "Her career is in jeopardy after Roylin dies in CIA custody.", ["margaret-roylin"]),
+    fact(4, 3, "She and Stuart get back together and plan to move in.", ["stuart-hayford"]),
+    fact(4, 6, "She casually proposes marriage to Stuart, and they argue.", ["stuart-hayford"]),
   ], "US embassy"),
   character("austin-dennison", "Austin Dennison", "David Gyasi", [1, 1], [[1, 1, "UK Foreign Secretary"]], [
     fact(1, 6, "He lost the party leadership to Trowbridge in a contest Roylin engineered.", ["nicol-trowbridge", "margaret-roylin"]),
@@ -96,13 +110,16 @@ const characters: Character[] = [
     fact(2, 3, "He tries and fails to gather enough votes to force Trowbridge out.", ["nicol-trowbridge"]),
     fact(3, 4, "He and Kate kiss at his home, but he says the timing is wrong.", ["kate-wyler"]),
     fact(3, 8, "He married four weeks before the Chequers dinner.", []),
+    fact(4, 3, "He is killed in a helicopter crash in India.", []),
   ], "UK government"),
-  character("nicol-trowbridge", "Nicol Trowbridge", "Rory Kinnear", [1, 1], [[1, 1, "Prime Minister of the United Kingdom"]], [
+  character("nicol-trowbridge", "Nicol Trowbridge", "Rory Kinnear", [1, 1], [[1, 1, "Prime Minister of the United Kingdom"], [4, 4, "Former Prime Minister"]], [
     fact(1, 2, "His vow to 'rain hellfire' on Iran goes viral.", []),
     fact(1, 3, "He misled the Americans about the carrier's condition to draw them in.", []),
     fact(1, 6, "He wants a show of force to head off a Scottish independence referendum.", []),
     fact(2, 1, "He leans on his wife Lydia for advice.", ["lydia-trowbridge"]),
     fact(2, 3, "Many MPs are angry with him, but the public sees him as a hero.", []),
+    fact(4, 4, "He picks Robyn Palmer, a little-known transport official, as the new Foreign Secretary.", ["robyn-palmer"]),
+    fact(4, 4, "He announces his resignation.", []),
   ], "UK government"),
   character("miguel-ganon", "Miguel Ganon", "Miguel Sandoval", [1, 1], [[1, 1, "US Secretary of State"]], [
     fact(1, 1, "He tries to have Kate removed as ambassador.", ["kate-wyler"]),
@@ -138,6 +155,11 @@ const characters: Character[] = [
     fact(2, 6, "She explains to Kate why a Scottish naval base is vital to US and UK nuclear defence.", ["kate-wyler"]),
     fact(3, 1, "She is sworn in at the US embassy in London.", []),
     fact(3, 3, "After hearing Kate out, she goes ahead with Hal as her nominee.", ["kate-wyler", "hal-wyler"]),
+    fact(4, 1, "She refuses to meet Callum about the radiation readings.", ["callum-ellis"]),
+    fact(4, 1, "She is shot as the delegation prepares to leave Windsor.", []),
+    fact(4, 3, "Her staff and Todd worry about her irritability after the shooting.", ["todd-penn"]),
+    fact(4, 6, "She orders Kate to threaten to send warships to the British coast.", ["kate-wyler"]),
+    fact(4, 8, "At the G7 she announces a submarine leak while hiding the truth about the weapon.", []),
   ], "White House"),
   character("callum-ellis", "Callum Ellis", "Aidan Turner", [3, 5], [[3, 5, "British intelligence officer"]], [
     fact(3, 5, "He alerts Kate to a Russian submarine in distress off the British coast.", ["kate-wyler"]),
@@ -145,8 +167,25 @@ const characters: Character[] = [
   ], "UK government"),
   character("todd-penn", "Todd Penn", "Bradley Whitford", [3, 6], [[3, 6, "The President's husband"]], [
     fact(3, 6, "He resents feeling like he plays second fiddle.", []),
+    fact(4, 4, "Frustrated with Grace, he asks to be sent abroad.", ["grace-penn"]),
+    fact(4, 5, "He tours London and asks Kate to have him posted there as a special envoy.", ["kate-wyler"]),
+    fact(4, 8, "He warns Robyn Palmer that US forces may attack Russian submarines.", ["robyn-palmer"]),
   ], "White House"),
-  character("frances-munning", "Frances Munning", "Penny Downie", [3, 7], [[3, 7, "Residence manager, Winfield House"]], [], "US embassy"),
+  character("frances-munning", "Frances Munning", "Penny Downie", [3, 7], [[3, 7, "Residence manager, Winfield House"]], [
+    fact(4, 5, "She overhears Kate ranting about bringing down Trowbridge's government.", ["kate-wyler", "nicol-trowbridge"]),
+  ], "US embassy"),
+  character("robyn-palmer", "Robyn Palmer", "Abigail Marlowe", [4, 4], [[4, 4, "UK Foreign Secretary"]], [
+    fact(4, 4, "A little-known official from the Department for Transport before her promotion.", []),
+    fact(4, 5, "She keeps her post under the new Prime Minister but is guarded with Kate.", ["bethan-vaughn", "kate-wyler"]),
+  ], "UK government"),
+  character("bethan-vaughn", "Bethan Vaughn", "Jodie Whittaker", [4, 5], [[4, 5, "Prime Minister of the United Kingdom"]], [
+    fact(4, 5, "The Penn administration's preferred choice for Prime Minister.", ["grace-penn"]),
+    fact(4, 5, "She agrees to a Kremlin request to retrieve Russian sailors from the sunken submarine.", []),
+    fact(4, 8, "Britain will escort the Russian ships.", []),
+  ], "UK government"),
+  character("tom-libby", "Tom Libby", "Richard Dillane", [4, 4], [[4, 4, "Chief of MI6"]], [
+    fact(4, 4, "He was in the room when Hal told Trowbridge about the weapon.", ["hal-wyler", "nicol-trowbridge"]),
+  ], "UK government"),
 ];
 
 const rel = (a: string, b: string, versions: [number, number, string, Relationship["versions"][number]["kind"]][]): Relationship => ({
@@ -154,11 +193,11 @@ const rel = (a: string, b: string, versions: [number, number, string, Relationsh
 });
 
 const relationships: Relationship[] = [
-  rel("kate-wyler", "hal-wyler", [[1, 1, "Married, planning to divorce", "romance"], [3, 3, "Separated in private", "romance"], [3, 8, "Back together", "romance"]]),
+  rel("kate-wyler", "hal-wyler", [[1, 1, "Married, planning to divorce", "romance"], [3, 3, "Separated in private", "romance"], [3, 8, "Back together", "romance"], [4, 1, "Renewed their vows", "romance"]]),
   rel("kate-wyler", "austin-dennison", [[1, 1, "Diplomatic counterparts", "work"], [1, 6, "Admitted feelings", "romance"], [2, 5, "Trust broken", "conflict"], [3, 4, "Kissed; he pulled back", "romance"]]),
   rel("kate-wyler", "stuart-hayford", [[1, 1, "Her deputy", "work"], [2, 2, "Blames her for Ronnie's death", "conflict"], [2, 4, "Working together again", "work"]]),
   rel("kate-wyler", "billie-appiah", [[1, 1, "Vetting her for the vice presidency", "work"]]),
-  rel("stuart-hayford", "eidra-park", [[1, 6, "Dating", "romance"], [1, 8, "Broke up", "conflict"]]),
+  rel("stuart-hayford", "eidra-park", [[1, 6, "Dating", "romance"], [1, 8, "Broke up", "conflict"], [4, 3, "Back together", "romance"]]),
   rel("stuart-hayford", "billie-appiah", [[1, 4, "Former campaign colleagues", "work"]]),
   rel("hal-wyler", "cecilia-dennison", [[1, 5, "Shared a kiss", "romance"]]),
   rel("nicol-trowbridge", "austin-dennison", [[1, 1, "Prime Minister and Foreign Secretary", "work"], [1, 6, "Old leadership rivals", "conflict"], [2, 5, "Mended their relationship", "alliance"]]),
@@ -166,8 +205,11 @@ const relationships: Relationship[] = [
   rel("nicol-trowbridge", "lydia-trowbridge", [[2, 1, "Married", "family"]]),
   rel("austin-dennison", "cecilia-dennison", [[1, 5, "Siblings", "family"]]),
   rel("hal-wyler", "grace-penn", [[3, 1, "She asks him to be her running mate", "work"]]),
-  rel("grace-penn", "todd-penn", [[3, 6, "Married", "family"]]),
-  rel("kate-wyler", "callum-ellis", [[3, 5, "Affair", "romance"]]),
+  rel("grace-penn", "todd-penn", [[3, 6, "Married", "family"], [4, 4, "Married, increasingly strained", "family"]]),
+  rel("kate-wyler", "callum-ellis", [[3, 5, "Affair", "romance"], [4, 1, "She ended it", "conflict"]]),
+  rel("kate-wyler", "grace-penn", [[2, 5, "Wary allies", "work"], [4, 7, "Open conflict", "conflict"]]),
+  rel("nicol-trowbridge", "robyn-palmer", [[4, 4, "He appointed her Foreign Secretary", "work"]]),
+  rel("bethan-vaughn", "robyn-palmer", [[4, 5, "Prime Minister and Foreign Secretary", "work"]]),
 ];
 
 const recap = (season: number, episode: number, short: string, previously: string[]): EpisodeRecap => ({ season, episode, short, long: "", previously, status: "published" });
@@ -195,12 +237,21 @@ const episodeRecaps: EpisodeRecap[] = [
   recap(3, 6, "At Penn's Long Island home, the two couples clash. They decide to blame the late President Rayburn and tell Trowbridge privately. At the press conference, Trowbridge breaks the deal and blames Rayburn publicly.", ["A former Lenkov colonel says the US was behind the attack.", "A Russian submarine is in distress off Britain."]),
   recap(3, 7, "Kate sneaks back into Winfield amid protests. Callum reveals the submarine carries a Poseidon nuclear torpedo. Kate apologises to the residence manager, and Penn agrees to a summit in the UK.", ["Trowbridge publicly blamed Rayburn for the attack.", "Callum is tracking the Russian submarine."]),
   recap(3, 8, "Penn apologises to Trowbridge in London. At Chequers, Todd asks if she's having an affair with Hal. Kate and Hal reconcile. Then Kate realises Penn and Hal secretly recovered the weapon and used her idea as cover.", ["The submarine carries a Poseidon nuclear torpedo.", "Penn is coming to the UK for a summit."]),
+  recap(4, 1, "Rerouted to Windsor by protesters, Kate and Hal fight over the secret removal of the weapon. Penn refuses to hear Callum out, so Kate misleads him and ends their affair. Kate and Hal quietly renew their vows. As the delegation leaves Windsor, Penn is shot.", ["Kate realised Penn and Hal secretly took the Poseidon weapon.", "Kate and Hal reconciled.", "Callum noticed radiation levels around the submarine dropped."]),
+  recap(4, 2, "Penn is flown to a US carrier for surgery and hands Hal temporary presidential powers. Trowbridge pledges full support in finding the shooter. Kate and Hal clash while drafting a contingency speech. Penn pulls through, but Appiah wonders whether she is ready to take power back.", ["Penn was shot at Windsor.", "Kate and Hal renewed their vows."]),
+  recap(4, 3, "Stuart and Eidra reunite. The shooter is found dead. A cost dispute over burying the submarine threatens to expose the missing weapon. Hal flies to London and tells Trowbridge outright that the US took it. Trowbridge barely reacts, then reveals Dennison has died in a helicopter crash.", ["Penn survived surgery after the shooting.", "Hal briefly held presidential powers."]),
+  recap(4, 4, "Grief-stricken, Trowbridge hardly took in Hal's confession, though the MI6 chief heard it. Trowbridge lashes out at bullying allies and names Robyn Palmer Foreign Secretary. Kate tells Palmer what Roylin did and how Trowbridge reacted. Trowbridge resigns.", ["Dennison died in a helicopter crash.", "Hal told Trowbridge the US took the weapon."]),
+  recap(4, 5, "Bethan Vaughn becomes Prime Minister and keeps Kate at arm's length. Todd comes to London and wants to stay. Kate feels ill and Todd suspects she is pregnant. Vaughn reveals she has agreed to let Russia retrieve its dead sailors. Frances overhears Kate venting about bringing down the last government.", ["Trowbridge resigned.", "Robyn Palmer is Foreign Secretary."]),
+  recap(4, 6, "Penn orders Kate to threaten Britain with US warships. Kate tells Stuart and Eidra the full truth about Penn and the attack. Kate gets to Vaughn first with a joint-rescue idea. Vaughn refuses, and Kate lies to Penn, saying she agreed.", ["Vaughn agreed to let Russia retrieve its sailors.", "Frances overheard Kate."]),
+  recap(4, 7, "At the G7 in Italy, a Russian ship sets sail and Kate's lie unravels. Stuart tells Appiah he knows Penn planned the attack. Kate and Hal talk honestly about their marriage. A tense dinner ends with Penn learning the truth and ordering Kate to deliver the warship threat.", ["Penn ordered a warship threat against Britain.", "Kate lied to Penn about Vaughn's answer."]),
+  recap(4, 8, "Penn deploys warships, and Britain says it will escort the Russian ships. Stuart files a dissent and is recalled. At the G7, Penn covers up the weapon with a story about a leak. Kate resigns in public, Appiah and Ganon follow, and Kate tells the press the Vice President has a statement.", ["Penn learned Kate lied to her.", "Stuart knows Penn planned the attack."]),
 ];
 
 const seasonRecaps: SeasonRecap[] = [
   { season: 1, status: "published", sixtySeconds: "After a British carrier is attacked, Kate Wyler becomes US ambassador in London while her marriage to Hal falls apart and Washington eyes her for vice president. The trail leads from Iran to Russian mercenary Roman Lenkov. Kate comes to suspect Prime Minister Trowbridge, and the season ends with a car bomb in London.", full: [] },
   { season: 2, status: "published", sixtySeconds: "In the aftermath of the London bombing, Roylin admits hiring Lenkov for a staged attack that went wrong. Kate learns Vice President Grace Penn gave Roylin the idea. Hal confronts the President, who dies, and Penn becomes President.", full: [] },
   { season: 3, status: "published", sixtySeconds: "Penn picks Hal as vice president; Roylin dies in CIA custody; the Wylers quietly separate. Facing the truth about the attack, the US blames the late President Rayburn, and Trowbridge goes public. A Russian submarine with a nuclear torpedo forces a summit, the Wylers reconcile, and Kate discovers Penn and Hal secretly took the weapon.", full: [] },
+  { season: 4, status: "published", sixtySeconds: "Penn is shot at Windsor and survives, changed. Dennison dies, and Trowbridge steps down after Kate tells the new Foreign Secretary what happened. Bethan Vaughn becomes Prime Minister and lets Russia retrieve its sailors. Penn threatens Britain with warships, Kate deceives her to slow things down, and at the G7 Kate resigns in public, followed by Appiah and Ganon.", full: [] },
 ];
 
 const rule = (name: string, pattern: RegExp, revealAt: Position): SpoilerRule => ({ name, pattern, revealAt, verified: true });
@@ -225,6 +276,15 @@ const spoilerRules: SpoilerRule[] = [
   rule("Russian submarine", /\bRussian submarine\b|\bsubmarine in distress\b/i, E(3, 5)),
   rule("Poseidon torpedo", /\bPoseidon\b|\bnuclear torpedo\b/i, E(3, 7)),
   rule("Who took the weapon", /\b(secretly )?(recovered|retrieved|took)\b[^.]{0,40}\bweapon\b/i, E(3, 8)),
+  rule("Penn is shot", /\b(Penn|Grace|President)\b[^.]{0,40}\b(is shot|was shot|shooting|wounded|surgery)\b|\bshooter\b/i, E(4, 1)),
+  rule("Vow renewal", /\brenew\w*\b[^.]{0,20}\bvows\b/i, E(4, 1)),
+  rule("Dennison's death", /\bDennison\b[^.]{0,60}\b(killed|dies|died|dead|death|crash|funeral)\b|\bhelicopter crash\b/i, E(4, 3)),
+  rule("Trowbridge resigns", /\bTrowbridge\b[^.]{0,60}\bresign\w*\b/i, E(4, 4)),
+  rule("Vaughn becomes Prime Minister", /\bVaughn\b[^.]{0,40}\b(becomes|named|new) (Prime Minister|PM)\b|\bPrime Minister Vaughn\b/i, E(4, 5)),
+  rule("Kate pregnant?", /\bpregnan\w*\b/i, E(4, 5)),
+  rule("Warship threat", /\b(threat\w*|threaten\w*|deploy\w*|send)\b[^.]{0,40}\bwarships?\b|\bwarships?\b[^.]{0,40}\b(threat|coast|deploy\w*)\b|\bwarship threat\b/i, E(4, 6)),
+  rule("Kate lies to Penn", /\bKate\b[^.]{0,40}\b(lies|lied)\b[^.]{0,20}\b(to )?(Penn|Grace|the President)\b|\bKate's lie\b/i, E(4, 6)),
+  rule("Kate resigns at the G7", /\bresigns? in public\b|\bpublicly resign\w*\b|\bKate\b[^.]{0,40}\bresigns\b/i, E(4, 8)),
 ];
 
 const content: ShowContent = {
