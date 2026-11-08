@@ -1,0 +1,8 @@
+@import "tailwindcss";
+:root { color-scheme: light dark; }
+body { @apply bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100 antialiased; }
+a { @apply underline-offset-4; }
+.card { @apply rounded-xl border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900; }
+.btn { @apply inline-flex items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300; }
+.muted { @apply text-stone-600 dark:text-stone-400; }
+.chip { @apply rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-700 dark:bg-stone-800 dark:text-stone-300; }

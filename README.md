@@ -1,14 +1,24 @@
 # Caught Up
 
-A spoiler-free companion for TV series. The pilot show is *The Diplomat*. Spec: [docs/SPEC.txt](docs/SPEC.txt). Decisions: [DECISIONS.md](DECISIONS.md).
+A spoiler-free companion for TV series. The pilot show is *The Diplomat* (all four seasons). Spec: [docs/SPEC.txt](docs/SPEC.txt). Decisions: [DECISIONS.md](DECISIONS.md).
 
+## Run
 ```bash
 npm install
-npm test               # gating, search, cache and audit tests
-npm run content:build  # validate and audit every show, then write .content-build/<slug>.json
+cp .env.example .env.local   # add ANTHROPIC_API_KEY for the Ask assistant
+npm run build                # runs content:build (validation + spoiler audit) then next build
+npm start
 ```
+Deploy: any Node host or Vercel (`npm run build` is the build command; set `ANTHROPIC_API_KEY`).
+
+## Checks
+- `npm test`: gating property tests, search parity, versioned roles/relationships, the audit, assistant grounding.
+- `npm run content:build`: a failed spoiler audit fails the build. There is no override.
+- `BASE=http://localhost:3000 npx tsx scripts/e2e-leak-scan.ts`: fetches every screen at every episode boundary and scans the HTML with the spoiler rules.
+- `npx tsx scripts/cross-check.ts <dir>`: regenerates second-source corroboration from saved Tudum article text.
 
 ## Layout
-- `src/spoiler/`: position ordinals (`position.ts`), compiling content into gated items (`compile.ts`), server-side gating, character cards and search (`gate.ts`), and the spoiler audit (`audit.ts`).
-- `content/the-diplomat/`: typed show content. S1–S3 are filled in; S4 has structure only.
-- Not built yet: the Next.js app, Postgres, and the AI assistant.
+- `src/spoiler/`: positions, compile, gating, search, the audit.
+- `content/the-diplomat/`: `base.ts` (authored content) plus `corroboration.ts` (generated).
+- `app/`: Next.js routes. Pages are under `/s/[show]/at/[pos]/…`; the APIs are `/api/ask`, `/api/report` and `/api/position`.
+- `lib/`: server-only data access, the JSONL store, and the gated assistant.

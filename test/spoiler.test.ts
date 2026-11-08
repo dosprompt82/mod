@@ -138,3 +138,15 @@ describe("spoiler audit", () => {
     expect(scanAnswer(show, "Penn is sworn in at the embassy (S3E1).", ord(S, finished(S, 3, 1)))).toEqual([]);
   });
 });
+
+describe("assistant grounding", () => {
+  it("notes are built only from gated items", async () => {
+    const S2 = show.show;
+    const all = compile(show);
+    const o = ord(S2, finished(S2, 1, 1));
+    const v = visibleItems(all, S2.slug, o);
+    const text = v.flatMap((i) => i.text).join(" ");
+    expect(text).not.toMatch(/Roylin|Penn|Callum/);
+    expect(scanAnswer(show, text, o)).toEqual([]);
+  });
+});
