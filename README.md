@@ -6,6 +6,8 @@ A local-first personal AI workstation. Paste email screenshots, drop documents, 
 
 > **Status:** see [BUILD_STATUS.md](BUILD_STATUS.md). All automated tests pass using an offline mock AI provider. **Live Anthropic API calls have not yet been verified** in the build environment because no API key was available there; the first real request on your machine is the live test.
 
+**New here? Follow [INSTALL.md](INSTALL.md)** (step by step, no experience needed). To get new versions, see **[UPDATING.md](UPDATING.md)**.
+
 ---
 
 ## First-time setup
@@ -29,6 +31,10 @@ Setup creates `backend/.venv`, installs the Python packages, installs the interf
 | Windows | Double-click **`start.bat`** |
 
 The app opens at **http://127.0.0.1:8765**. Keep the window open while you work; press Ctrl+C (or close the window) to stop. If setup hasn't been run, the launcher runs it first.
+
+## Updating
+
+Close the app, then run `update.command` (macOS), `update.bat` (Windows) or `./update.sh` (Linux): it backs up `data/`, pulls the newest version and rebuilds. Or pull with GitHub Desktop; the launcher notices the new version and rebuilds on the next start. Your `data/` folder is never touched by updates. Details: [UPDATING.md](UPDATING.md).
 
 ## Configure the AI
 

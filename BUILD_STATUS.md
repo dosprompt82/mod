@@ -14,6 +14,7 @@ Last verified: 2026-11-16. Legend: **Implemented & tested** (automated tests exe
 
 | Area | Feature | Status |
 |---|---|---|
+| Updates | `update.*` scripts (backup → pull → rebuild), automatic rebuild detection in launchers, newer-data guard | Implemented & tested on Linux; Windows/macOS scripts **not executed** |
 | Foundation | FastAPI + SQLite + versioned migrations, one-command launchers | Implemented & tested (Linux `start.sh`/`setup.sh` run from a clean copy; `start.bat`, `setup.bat`, `start.command` written but **not executed**: no Windows/macOS machine available) |
 | Input | Multi-file drag-drop, file picker, add files mid-conversation, remove before sending | Implemented & tested (Vitest, Playwright) |
 | Input | Clipboard screenshot paste (Ctrl/Cmd+V) | Implemented & tested (Vitest + real Chromium paste event) |
@@ -50,13 +51,14 @@ Last verified: 2026-11-16. Legend: **Implemented & tested** (automated tests exe
 
 | Suite | Result |
 |---|---|
-| Backend pytest | 74 passed, 1 skipped (live smoke test, needs a key) |
+| Backend pytest | 75 passed, 1 skipped (live smoke test, needs a key) |
 | Frontend Vitest | 14 passed |
 | TypeScript (`tsc -b`) | clean |
 | ESLint | clean |
 | Production build (`vite build`) | succeeds |
 | Playwright E2E (real backend, mock AI) | 4 passed: email screenshot → draft → edit → save → reload → export; multi-page PDF → question → evidence → analysis → review → DOCX opens; real clipboard paste; axe accessibility scan |
 | Clean-copy install (`setup.sh`) + backend tests | passed |
+| Update rehearsal (Linux): install → add data → publish new version → `update.sh` | passed: refused while running, pre-update backup made, version 1.0.0 → 1.0.1, data kept, new interface served; launcher auto-rebuilt after an update applied without the script; older version refused newer data with a clear message |
 
 ## Known limitations
 

@@ -17,3 +17,4 @@ data/
 !.env.example
 secrets.json
 *.log
+.setup-stamp
