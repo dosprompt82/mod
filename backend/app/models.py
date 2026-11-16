@@ -7,8 +7,27 @@ from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
 
 from .db import Base
+
+
+class UTCDateTime(TypeDecorator):
+    """Stores UTC in SQLite (which has no time zones) and always returns timezone-aware UTC datetimes,
+    so the API emits '+00:00' and browsers in any time zone show correct times."""
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None and value.tzinfo is not None:
+            value = value.astimezone(UTC).replace(tzinfo=None)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None and value.tzinfo is None:
+            value = value.replace(tzinfo=UTC)
+        return value
 
 
 def new_id() -> str:
@@ -34,8 +53,8 @@ def jdump(value) -> str:
 
 
 class TimestampMixin:
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now, index=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now, onupdate=now)
 
 
 # ---- workspaces -----------------------------------------------------------------
@@ -140,7 +159,7 @@ class ModelRun(TimestampMixin, Base):
     result_type: Mapped[str | None] = mapped_column(String(20))
     result_id: Mapped[str | None] = mapped_column(String(32))
     message_id: Mapped[str | None] = mapped_column(String(32))
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 class Analysis(TimestampMixin, Base):
@@ -217,7 +236,7 @@ class DraftVersion(Base):
     note: Mapped[str] = mapped_column(String(300), default="")
     author: Mapped[str] = mapped_column(String(20), default="ai")  # ai|user
     provider: Mapped[str] = mapped_column(String(20), default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now)
     draft: Mapped[Draft] = relationship(back_populates="versions")
 
 
@@ -236,7 +255,7 @@ class Decision(TimestampMixin, Base):
     rationale: Mapped[str | None] = mapped_column(Text)
     due_date: Mapped[str | None] = mapped_column(String(40))
     source: Mapped[str] = mapped_column(String(20), default="user")  # user|ai_suggested
-    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    decided_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 class Task(TimestampMixin, Base):
@@ -251,7 +270,7 @@ class Task(TimestampMixin, Base):
     owner: Mapped[str | None] = mapped_column(String(200))
     source: Mapped[str] = mapped_column(String(20), default="user")  # user|extracted
     source_excerpt: Mapped[str | None] = mapped_column(Text)
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 # ---- knowledge & personalisation -----------------------------------------------------
@@ -276,14 +295,14 @@ class WritingProfile(TimestampMixin, Base):
     profile_json: Mapped[str] = mapped_column(Text, default="{}")
     sample_excerpt: Mapped[str] = mapped_column(Text, default="")
     provider: Mapped[str] = mapped_column(String(20), default="")
-    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 class Preference(Base):
     __tablename__ = "preferences"
     key: Mapped[str] = mapped_column(String(80), primary_key=True)
     value: Mapped[str] = mapped_column(Text)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now, onupdate=now)
 
 
 class Export(Base):
@@ -295,13 +314,13 @@ class Export(Base):
     filename: Mapped[str] = mapped_column(String(300))
     stored_name: Mapped[str] = mapped_column(String(80))
     size_bytes: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now)
 
 
 class AuditEvent(Base):
     __tablename__ = "audit_events"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now, index=True)
     action: Mapped[str] = mapped_column(String(60))
     entity_type: Mapped[str | None] = mapped_column(String(40))
     entity_id: Mapped[str | None] = mapped_column(String(64))

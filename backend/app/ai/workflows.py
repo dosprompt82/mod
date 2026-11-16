@@ -212,7 +212,7 @@ class Runner:
     # -- provider calls --
     def _progress(self, chars: int) -> None:
         base = self.run.step_label.split(" · ")[0]
-        self.run.step_label = f"{base} · receiving response ({chars:,} characters)"
+        self.run.step_label = f"{base} · writing the answer ({chars:,} characters so far)"
         self.db.commit()
 
     def step(self, label: str) -> None:
@@ -230,7 +230,15 @@ class Runner:
         effort = "high" if depth == "deep" and workflow in ("document", "reasoning", "review", "memo", "revise_analysis", "email") else None
         m = {"sources": ctx.mock_sources, "images": list(ctx.image_labels), "knowledge": list(ctx.knowledge_labels),
              "records": list(ctx.record_labels), **(meta or {})}
-        req = AIRequest(workflow=workflow, system=system_prompt(workflow, schema_key), parts=ctx.parts, max_tokens=16000, effort=effort, meta=m)
+        big = workflow in ("email", "document", "reasoning", "review", "memo", "writing", "revise_analysis", "knowledge")
+        req = AIRequest(workflow=workflow, system=system_prompt(workflow, schema_key), parts=ctx.parts, max_tokens=32000 if big else 16000,
+                        effort=effort, meta=m)
+        pages = max(1, round(ctx.source_chars / 3500))
+        imgs = len(ctx.images)
+        base = self.run.step_label.split(" · ")[0]
+        self.step(f"{base} · the AI is reading about {pages} page{'s' if pages != 1 else ''}"
+                  + (f" and {imgs} image{'s' if imgs != 1 else ''}" if imgs else "")
+                  + " and thinking; long documents can take a few minutes")
         res = self.provider.complete(req, self.cancel, self._progress)
         self._account(res)
         try:

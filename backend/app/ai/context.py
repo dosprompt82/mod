@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from html import escape
@@ -16,7 +17,9 @@ from ..services.prefs import get_pref
 from ..services.storage import stored_path
 from .provider import ImagePart
 
-TEXT_BUDGET = 120_000  # characters of source text per request
+TEXT_BUDGET = 120_000  # characters of source text per request (~35 pages)
+PRIMARY_DOC_CHARS = 70_000  # documents up to ~20 pages are always sent in full
+PRIMARY_TOTAL = 90_000  # ...as long as together they leave room for reference excerpts
 MAX_IMAGES = 12
 MAX_PDF_VISION_PAGES = 8
 IMAGE_MAX_EDGE = 1568
@@ -33,6 +36,11 @@ class Context:
     record_labels: dict[str, tuple[str, str]] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
     mock_sources: list[dict] = field(default_factory=list)  # label/text/filename, for the offline mock only
+    selection: dict | None = None  # what was sent in full vs excerpted when documents exceed the budget
+
+    @property
+    def source_chars(self) -> int:
+        return sum(len(p) for p in self.parts if isinstance(p, str))
 
     @property
     def images(self) -> list[ImagePart]:
@@ -85,14 +93,78 @@ def _pdf_page_png(data: bytes, page_number: int) -> bytes:
         return doc[page_number - 1].get_pixmap(dpi=144).tobytes("png")
 
 
-def _source_block(label: str, ch: DocumentChunk, att: Attachment) -> str:
+def _source_block(label: str, ch: DocumentChunk, att: Attachment, reference: bool = False) -> str:
     origin = "AI transcription of an image (may contain errors)" if ch.text_source == "vision" else "extracted text"
     attrs = f'label="{label}" document="{_attr(att.original_filename)}"'
+    if reference:
+        attrs += ' role="reference excerpt"'
     if ch.page_number:
         attrs += f' page="{ch.page_number}"'
     if ch.section:
         attrs += f' section="{_attr(ch.section)}"'
     return f"<source {attrs} origin=\"{origin}\">\n{ch.text}\n</source>"
+
+
+def topic_terms(text: str, n: int = 30) -> list[str]:
+    """The most frequent meaningful words of a document: used to find the passages of large reference
+    documents (e.g. accounting guides) that relate to what the primary document is about."""
+    counts: dict[str, int] = {}
+    for w in re.findall(r"[A-Za-z][A-Za-z-]{3,}", text.lower()):
+        if w not in search.STOPWORDS and w not in _GENERIC:
+            counts[w] = counts.get(w, 0) + 1
+    return [w for w, _ in sorted(counts.items(), key=lambda kv: -kv[1])[:n]]
+
+
+_GENERIC = set("""shall will would should could also such than then this that these those which with from have been being into upon under
+within without other others between including include includes included based following page pages section sections paragraph example
+however therefore because whether where there their they them were when what more most less only same each both above below year years
+company entity date note notes table total amount amounts""".split())
+
+
+def _select_within_budget(db: Session, ws: Workspace, atts: list[Attachment], chunks: list, instruction: str, ctx: "Context"):
+    """When everything doesn't fit: send the shorter documents (the memo, letter or agreement being worked on)
+    in full, then fill the rest with the passages of the long documents that best match the request and the
+    topics of the documents sent in full."""
+    sizes = {a.id: sum(len(c.text) for c in a.chunks) for a in atts}
+    primary: list[Attachment] = []
+    used = 0
+    for a in sorted(atts, key=lambda a: sizes[a.id]):
+        if sizes[a.id] <= PRIMARY_DOC_CHARS and used + sizes[a.id] <= PRIMARY_TOTAL:
+            primary.append(a)
+            used += sizes[a.id]
+    primary_ids = {a.id for a in primary}
+    keep = {c.id for a in primary for c in a.chunks}
+    references = [a for a in atts if a.id not in primary_ids]
+    primary_text = " ".join(c.text for a in primary for c in a.chunks)
+    query = f"{instruction} {' '.join(topic_terms(primary_text))}" if primary_text else instruction
+    ranked = [int(r["ref_id"]) for r in search.search(db, query, kinds=["chunk"], workspace_id=ws.id, limit=800, match="any")]
+    ref_chunk_ids = {c.id for a in references for c in a.chunks}
+    by_id = {c.id: c for c, _ in chunks}
+    budget = used
+    for cid in ranked:
+        c = by_id.get(cid)
+        if c is None or cid not in ref_chunk_ids or cid in keep:
+            continue
+        if budget + len(c.text) > TEXT_BUDGET:
+            continue
+        keep.add(cid)
+        budget += len(c.text)
+    if not ranked and not primary:  # no keyword matches at all: fall back to the opening of each document
+        for a in atts:
+            for c in a.chunks[:3]:
+                if budget + len(c.text) <= TEXT_BUDGET:
+                    keep.add(c.id)
+                    budget += len(c.text)
+    selected = [ca for ca in chunks if ca[0].id in keep]
+    n_ref = sum(1 for c, a in selected if a.id not in primary_ids)
+    if primary:
+        ctx.notes.append("Sent in full: " + ", ".join(a.original_filename for a in primary) + ".")
+    if references:
+        ctx.notes.append(f"Too long to send in full, so the {n_ref} most relevant passages were selected from: "
+                         + ", ".join(a.original_filename for a in references) + " (marked role=\"reference excerpt\").")
+    ctx.selection = {"full": [a.original_filename for a in primary], "excerpted": [a.original_filename for a in references],
+                     "passages": n_ref, "chars": budget}
+    return selected, {a.id for a in references}
 
 
 def build(db: Session, ws: Workspace | None, workflow: str, instruction: str, focus_ids: list[str],
@@ -112,25 +184,13 @@ def build(db: Session, ws: Workspace | None, workflow: str, instruction: str, fo
         chunks += [(c, att_by_id[c.attachment_id]) for c in extra_sources if att_by_id.get(c.attachment_id)]
     total = sum(len(c.text) for c, _ in chunks)
     selected = chunks
+    reference_ids: set[str] = set()
     if total > TEXT_BUDGET and ws is not None:
-        ranked_ids = [int(r["ref_id"]) for r in search.search(db, instruction, kinds=["chunk"], workspace_id=ws.id, limit=400, match="any")]
-        rank = {cid: i for i, cid in enumerate(ranked_ids)}
-        must = set()
-        for a in atts:  # always keep each document's opening chunks for orientation
-            must.update(c.id for c in a.chunks[:2])
-        order = sorted(chunks, key=lambda ca: (ca[0].id not in must, rank.get(ca[0].id, 10_000), ca[0].ordinal))
-        budget, keep = 0, set()
-        for c, _ in order:
-            if budget + len(c.text) > TEXT_BUDGET:
-                continue
-            keep.add(c.id)
-            budget += len(c.text)
-        selected = [ca for ca in chunks if ca[0].id in keep]
-        ctx.notes.append(f"The documents are long; {len(selected)} of {len(chunks)} sections most relevant to the request were included.")
+        selected, reference_ids = _select_within_budget(db, ws, atts, chunks, instruction, ctx)
     for i, (c, a) in enumerate(selected, start=1):
         label = f"S{i}"
         ctx.chunk_labels[label] = c.id
-        parts.append(_source_block(label, c, a))
+        parts.append(_source_block(label, c, a, reference=a.id in reference_ids))
         ctx.mock_sources.append({"label": label, "text": c.text, "filename": a.original_filename})
 
     # ---- images (screenshots and image-only PDF pages) ------------------------------------

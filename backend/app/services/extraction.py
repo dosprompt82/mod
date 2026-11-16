@@ -234,7 +234,7 @@ def save_chunks(db: Session, att: Attachment, chunks: list[Block], text_source: 
         total += len(b.text)
         if att.workspace_id:
             search.index(db, "chunk", str(ch.id), att.workspace_id, "source_document" if text_source == "extracted" else "ai_interpretation",
-                         att.original_filename, b.text, f"doctype:{att.kind}", att.created_at)
+                         att.original_filename, b.text, f"doctype:{att.kind}", att.created_at, replace=False)
     att.text_chars = total
 
 
@@ -259,4 +259,4 @@ def index_attachment_chunks(db: Session, att: Attachment) -> None:
     search.remove_many(db, "chunk", [str(c.id) for c in att.chunks])
     for c in att.chunks:
         search.index(db, "chunk", str(c.id), att.workspace_id, "source_document" if c.text_source == "extracted" else "ai_interpretation",
-                     att.original_filename, c.text, f"doctype:{att.kind}", att.created_at)
+                     att.original_filename, c.text, f"doctype:{att.kind}", att.created_at, replace=False)

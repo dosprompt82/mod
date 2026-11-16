@@ -17,13 +17,16 @@ function RunCard({ run, onCancel }: { run: Run; onCancel: () => void }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
   const secs = Math.max(0, Math.round((now - new Date(run.created_at).getTime()) / 1000));
+  const elapsed = secs < 60 ? `${secs}s` : `${Math.floor(secs / 60)} min ${String(secs % 60).padStart(2, "0")}s`;
+  const [step, ...detail] = (run.step_label || "Working").split(" · ");
   return (
     <div className="panel flex items-center gap-3 px-4 py-3" role="status" aria-live="polite" data-testid="run-card">
-      <Spinner className="h-4 w-4 text-accent" />
+      <Spinner className="h-4 w-4 shrink-0 text-accent" />
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium">{run.step_label || "Working"}…</div>
+        <div className="text-sm font-medium">{step}…</div>
+        {detail.length > 0 && <div className="text-xs text-ink/80">{detail.join(" · ")}</div>}
         <div className="text-xs text-muted">
-          {run.steps.map((s) => WORKFLOW_LABELS[s] ?? s).join(" → ")} · {secs}s{run.provider === "anthropic" ? ` · ${run.model}` : " · mock provider"}
+          {run.steps.map((s) => WORKFLOW_LABELS[s] ?? s).join(" → ")} · {elapsed}{run.provider === "anthropic" ? ` · ${run.model}` : " · mock provider"}
         </div>
       </div>
       <button className="btn-secondary btn-sm" onClick={onCancel}>Cancel</button>

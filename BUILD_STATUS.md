@@ -51,7 +51,7 @@ Last verified: 2026-11-16. Legend: **Implemented & tested** (automated tests exe
 
 | Suite | Result |
 |---|---|
-| Backend pytest | 75 passed, 1 skipped (live smoke test, needs a key) |
+| Backend pytest | 83 passed, 1 skipped (live smoke test, needs a key) |
 | Frontend Vitest | 14 passed |
 | TypeScript (`tsc -b`) | clean |
 | ESLint | clean |
@@ -66,6 +66,6 @@ Last verified: 2026-11-16. Legend: **Implemented & tested** (automated tests exe
 - No local OCR: text in images is read only by the AI model, and its transcriptions are labelled as such.
 - DOCX "footnotes" are rendered as a numbered Sources section, not Word footnotes. PDF export is clean but typographically simpler than DOCX.
 - The accessibility scan covers the main screens, not every result state; no manual screen-reader pass was done.
-- Long documents are retrieved by keyword ranking when they exceed the per-request budget (~120k characters); very large document sets may miss relevant passages.
+- When attachments exceed the per-request budget (~120k characters, about 35 pages), documents up to ~20 pages are sent in full and longer ones (e.g. guides) contribute the passages that best match the request and the topics of the shorter documents. Relevant guide passages that use different wording can still be missed.
 - Cancellation stops streaming between events; an in-flight HTTP connection may take a moment to close.
 - Single-user, single-machine design; not intended for network exposure.

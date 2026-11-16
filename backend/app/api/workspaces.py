@@ -156,8 +156,7 @@ def create_run(ws_id: str, body: RunIn, db: Session = Depends(get_db)):
         if att.status == "failed":
             raise err(400, f"'{att.original_filename}' could not be read ({att.error}). Remove it and try again.", "bad_request")
         if att.workspace_id is None:
-            att.workspace_id = ws.id
-            index_attachment_chunks(db, att)
+            att.workspace_id = ws.id  # its text is indexed by the background job, not in this request
         focus.append(att)
     pool = focus or list(ws.attachments)
     has_images = any(a.kind == "image" for a in pool)
@@ -184,7 +183,7 @@ def create_run(ws_id: str, body: RunIn, db: Session = Depends(get_db)):
 
     def job(r):
         # Wait (bounded) for extraction of files attached to this request.
-        deadline = time.monotonic() + 120
+        deadline = time.monotonic() + 900  # very large PDFs (e.g. 1,000-page guides) can take a while
         while True:
             pending = [a for a in (r.db.get(Attachment, i) for i in focus_ids) if a is not None and a.status in ("uploaded", "extracting")]
             if not pending or time.monotonic() > deadline:
@@ -199,6 +198,8 @@ def create_run(ws_id: str, body: RunIn, db: Session = Depends(get_db)):
             a = r.db.get(Attachment, i)
             if a is not None:
                 r.db.refresh(a)
+                if len(a.chunks) > 200:
+                    r.step(f"Preparing {a.original_filename} for search")
                 index_attachment_chunks(r.db, a)
         r.db.commit()
         w = r.db.get(Workspace, ws.id)

@@ -2,6 +2,12 @@
 
 Versions follow `major.minor.patch`. The running version is shown in Settings → Application.
 
+## 1.2.0 (2026-11-16)
+- Much better handling of large reference documents (e.g. accounting guides attached next to a memo): shorter documents such as the memo are always sent in full, and guide passages are chosen by the topics the memo discusses, not just the words of your request. Guide passages are marked as reference excerpts so the AI reviews your document against them.
+- Preparing very large PDFs for search is far faster (it no longer slows down with each additional page).
+- Progress now says what's happening while the AI reads and thinks, and long answers have more room before being cut off.
+- Fixed: elapsed times and "x min ago" were wrong outside the UTC time zone (the progress timer stayed at 0s).
+
 ## 1.1.2 (2026-11-16)
 - Fixed: mentioning a memo ("review this memo") no longer makes the app write a new memo; it only drafts one when you ask it to ("prepare a memo…").
 

@@ -14,8 +14,12 @@ def _iso(dt) -> str:
     return str(dt or "")
 
 
-def index(db: Session, kind: str, ref_id: str, workspace_id: str | None, provenance: str, title: str, body: str, tags: str = "", created=None) -> None:
-    db.execute(text("DELETE FROM search_index WHERE kind=:k AND ref_id=:r"), {"k": kind, "r": ref_id})
+def index(db: Session, kind: str, ref_id: str, workspace_id: str | None, provenance: str, title: str, body: str, tags: str = "", created=None,
+          replace: bool = True) -> None:
+    """Add a row to the index. replace=False skips the delete for rows known to be new: deletes on FTS5
+    filter on unindexed columns and scan the whole table, which is slow for thousands of document chunks."""
+    if replace:
+        db.execute(text("DELETE FROM search_index WHERE kind=:k AND ref_id=:r"), {"k": kind, "r": ref_id})
     db.execute(
         text("INSERT INTO search_index(kind, ref_id, workspace_id, provenance, title, body, tags, created) VALUES (:k,:r,:w,:p,:t,:b,:g,:c)"),
         {"k": kind, "r": ref_id, "w": workspace_id or "", "p": provenance, "t": title or "", "b": body or "", "g": tags or "", "c": _iso(created)},
@@ -27,8 +31,11 @@ def remove(db: Session, kind: str, ref_id: str) -> None:
 
 
 def remove_many(db: Session, kind: str, ref_ids: list[str]) -> None:
-    for r in ref_ids:
-        remove(db, kind, r)
+    """One table scan per 500 ids instead of one per id."""
+    for i in range(0, len(ref_ids), 500):
+        batch = ref_ids[i:i + 500]
+        params = {"k": kind, **{f"r{j}": r for j, r in enumerate(batch)}}
+        db.execute(text("DELETE FROM search_index WHERE kind=:k AND ref_id IN (" + ",".join(f":r{j}" for j in range(len(batch))) + ")"), params)
 
 
 def remove_workspace(db: Session, workspace_id: str, kinds: tuple[str, ...]) -> None:
