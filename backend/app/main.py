@@ -17,7 +17,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .api import assistant, attachments, knowledge, results, system, workspaces
 from .config import APP_NAME, VERSION, settings
-from .db import migrate, session
+from .db import NewerDataError, migrate, session
 from .models import Attachment
 from .services.jobs import recover_after_restart
 from .services.storage import stored_path
@@ -56,7 +56,11 @@ def _purge_staged(db) -> None:
 async def lifespan(_: FastAPI):
     settings.ensure_dirs()
     _setup_logging()
-    migrate()
+    try:
+        migrate()
+    except NewerDataError as e:
+        log.error("%s", e)
+        raise
     db = session()
     try:
         n = recover_after_restart(db)

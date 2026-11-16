@@ -19,6 +19,9 @@ healthy() { "$PYBIN" -c "import urllib.request,sys; urllib.request.urlopen('$URL
 if [ ! -x "$PYBIN" ] || [ ! -f frontend/dist/index.html ]; then
   echo "First run: setting things up (a few minutes, once)…"
   ./setup.sh
+elif ! "$PYBIN" tools/setup_stamp.py check; then
+  echo "A new version was installed: updating packages and rebuilding the interface (about a minute)…"
+  ./setup.sh
 fi
 
 if healthy; then
@@ -35,7 +38,10 @@ trap 'kill $PID 2>/dev/null || true' INT TERM EXIT
 for _ in $(seq 1 60); do
   if healthy; then break; fi
   if ! kill -0 "$PID" 2>/dev/null; then
-    echo "The server stopped during startup. If port $PORT is in use, set PS_PORT in .env to another port." >&2
+    echo "The server stopped during startup." >&2
+    LOG="${PS_DATA_DIR:-$ROOT/data}/logs/app.log"
+    [ -f "$LOG" ] && { echo "Last log lines:" >&2; tail -n 5 "$LOG" >&2; }
+    echo "If port $PORT is in use, set PS_PORT in .env to another port." >&2
     exit 1
   fi
   sleep 0.5

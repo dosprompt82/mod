@@ -8,6 +8,9 @@ if not defined PS_PORT set PS_PORT=8765
 set URL=http://%PS_HOST%:%PS_PORT%
 if not exist backend\.venv\Scripts\python.exe goto setup
 if not exist frontend\dist\index.html goto setup
+backend\.venv\Scripts\python.exe tools\setup_stamp.py check && goto run
+echo A new version was installed: updating packages and rebuilding the interface (about a minute)...
+call setup.bat || ( pause & exit /b 1 )
 goto run
 :setup
 echo First run: setting things up (a few minutes, once)...

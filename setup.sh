@@ -30,4 +30,5 @@ say "2/3  Interface dependencies (Node $(node -v))"
 say "3/3  Building the interface"
 (cd frontend && npm run build --silent >/dev/null)
 
+backend/.venv/bin/python tools/setup_stamp.py write
 say "Setup complete. Start the app with ./start.sh (macOS: double-click start.command)."

@@ -71,6 +71,11 @@ def _m1(conn) -> None:
 
 
 MIGRATIONS = [(1, "initial schema + FTS5 index", _m1)]
+LATEST_SCHEMA = MIGRATIONS[-1][0]
+
+
+class NewerDataError(RuntimeError):
+    pass
 
 
 def migrate() -> int:
@@ -78,6 +83,12 @@ def migrate() -> int:
     with eng.begin() as conn:
         conn.execute(text("CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, description TEXT, applied_at TEXT DEFAULT CURRENT_TIMESTAMP)"))
         current = conn.execute(text("SELECT COALESCE(MAX(version), 0) FROM schema_version")).scalar_one()
+        latest = MIGRATIONS[-1][0]
+        if current > latest:
+            # Never let an older version write to data that a newer version has upgraded.
+            raise NewerDataError(
+                f"Your data was created by a newer version of Personal Superpower (data format {current}; this version "
+                f"understands up to {latest}). Update the app, or restore a backup made with this version.")
         for version, desc, fn in MIGRATIONS:
             if version > current:
                 fn(conn)

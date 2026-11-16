@@ -154,3 +154,24 @@ def test_usage_tracking(consented):
     wait_run(consented, run["run"]["id"])
     u = consented.get("/api/usage").json()
     assert u["total_runs"] == 1 and u["by_model"][0]["input_tokens"] > 0
+
+
+def test_older_version_refuses_newer_data(client):
+    import pytest
+
+    from app import db as dbmod
+    from app.db import NewerDataError, engine
+    from sqlalchemy import text
+
+    with engine().begin() as conn:
+        conn.execute(text("INSERT INTO schema_version(version, description) VALUES (999, 'from the future')"))
+    with pytest.raises(NewerDataError, match="newer version"):
+        dbmod.migrate()
+    # A backup containing that data is refused too, before anything is replaced.
+    from app.services import backup as backups
+
+    data = backups.create_backup().read_bytes()
+    with engine().begin() as conn:
+        conn.execute(text("DELETE FROM schema_version WHERE version = 999"))
+    with pytest.raises(backups.BackupError, match="newer version"):
+        backups.restore_backup(data)

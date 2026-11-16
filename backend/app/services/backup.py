@@ -85,11 +85,16 @@ def restore_backup(data: bytes) -> dict:
             con = sqlite3.connect(dbfile)
             ok = con.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
             con.execute("SELECT count(*) FROM workspaces").fetchone()
+            data_version = con.execute("SELECT COALESCE(MAX(version), 0) FROM schema_version").fetchone()[0]
             con.close()
         except sqlite3.DatabaseError as e:
             raise BackupError("The database inside the backup is damaged.") from e
         if not ok:
             raise BackupError("The database inside the backup failed an integrity check.")
+        from ..db import LATEST_SCHEMA
+
+        if data_version > LATEST_SCHEMA:
+            raise BackupError("This backup was made by a newer version of Personal Superpower. Update the app first, then restore it.")
         safety = create_backup("pre-restore")
         reset_engine()
         for suffix in ("", "-wal", "-shm"):

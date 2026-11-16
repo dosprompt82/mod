@@ -21,4 +21,5 @@ call npm ci --no-audit --no-fund --loglevel=error || ( popd & exit /b 1 )
 echo 3/3  Building the interface
 call npm run build --silent || ( popd & exit /b 1 )
 popd
+backend\.venv\Scripts\python.exe tools\setup_stamp.py write
 echo Setup complete. Start the app with start.bat
