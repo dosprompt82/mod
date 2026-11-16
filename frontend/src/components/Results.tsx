@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookmarkPlus, CheckSquare, FileText, GitCompare, ListChecks, ShieldQuestion, Swords } from "lucide-react";
+import { AlertTriangle, BookmarkPlus, CheckSquare, FileText, GitCompare, ListChecks, MessagesSquare, Send, ShieldQuestion, Swords } from "lucide-react";
 import { api, ApiError } from "../lib/api";
 import type { ActionItem, Analysis, AnalysisContent, DecisionItem, Draft, EmailContent, Review, WorkspaceDetail } from "../lib/types";
 import { useToast } from "./useToast";
@@ -15,6 +15,7 @@ import { BulletList, Collapsible, MockNotice, SeverityBadge, Spinner } from "./u
 export interface ResultActions {
   challenge: (type: "analysis" | "draft", id: string) => void;
   memo: () => void;
+  deliverable: (action: "talking_points" | "follow_up") => void;
   revise: (analysisId: string) => Promise<void>;
   reviseDraft: (draftId: string, instruction: string) => Promise<void>;
 }
@@ -233,6 +234,8 @@ export function AnalysisResult({ a, ws, act }: { a: Analysis; ws: WorkspaceDetai
       <div className="flex flex-wrap gap-2">
         <button className="btn-secondary btn-sm" onClick={() => act.challenge("analysis", a.id)} data-testid="challenge"><Swords className="h-3.5 w-3.5" /> Challenge this</button>
         <button className="btn-secondary btn-sm" onClick={act.memo}><FileText className="h-3.5 w-3.5" /> Create memo</button>
+        <button className="btn-ghost btn-sm" onClick={() => act.deliverable("talking_points")}><MessagesSquare className="h-3.5 w-3.5" /> Talking points</button>
+        <button className="btn-ghost btn-sm" onClick={() => act.deliverable("follow_up")}><Send className="h-3.5 w-3.5" /> Draft follow-up</button>
         <CreateItems ws={ws} actions={c.action_items ?? []} decisions={c.decisions ?? []} />
         <button className="btn-ghost btn-sm" onClick={() => save("analysis", a.id)}><BookmarkPlus className="h-3.5 w-3.5" /> Save to Knowledge</button>
         {parent && <button className="btn-ghost btn-sm" onClick={() => setCompare(true)}><GitCompare className="h-3.5 w-3.5" /> Compare with original</button>}

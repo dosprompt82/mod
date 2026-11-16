@@ -11,14 +11,14 @@
 /* Palette: warm paper neutrals with an ink-blue accent; amber marks the brand bolt. */
 :root {
   --bg: 247 247 245; --surface: 255 255 255; --sunken: 241 241 238; --line: 228 227 223;
-  --ink: 27 29 33; --muted: 104 108 116; --faint: 150 153 160;
+  --ink: 27 29 33; --muted: 88 92 100; --faint: 106 110 117;
   --accent: 39 70 122; --accent-ink: 255 255 255; --accent-soft: 232 237 246;
-  --ok: 35 122 82; --ok-soft: 229 244 236; --warn: 166 104 12; --warn-soft: 252 243 224; --danger: 180 46 46; --danger-soft: 251 233 232;
+  --ok: 28 110 72; --ok-soft: 229 244 236; --warn: 140 86 6; --warn-soft: 252 243 224; --danger: 180 46 46; --danger-soft: 251 233 232;
   color-scheme: light;
 }
 [data-theme="dark"] {
   --bg: 16 17 19; --surface: 23 24 27; --sunken: 29 31 35; --line: 42 44 49;
-  --ink: 232 233 235; --muted: 156 160 168; --faint: 112 116 124;
+  --ink: 232 233 235; --muted: 168 172 180; --faint: 132 136 144;
   --accent: 143 176 230; --accent-ink: 16 17 19; --accent-soft: 31 42 60;
   --ok: 108 200 150; --ok-soft: 22 46 35; --warn: 231 177 92; --warn-soft: 52 39 17; --danger: 239 128 120; --danger-soft: 58 26 26;
   color-scheme: dark;

@@ -103,6 +103,11 @@ export default function WorkspacePage() {
   const act: ResultActions = {
     challenge: (type, targetId) => { void send({ action: "challenge", target_type: type, target_id: targetId, instruction: "" }); },
     memo: () => { void send({ action: "memo", instruction: "Prepare a professional technical memorandum based on this analysis." }); },
+    deliverable: (action) => {
+      void send({ action, instruction: action === "talking_points"
+        ? "Prepare concise meeting talking points from this analysis: the position, the key reasons, likely questions and answers."
+        : "Draft a short follow-up communication based on this analysis, with the open items and who owns them." });
+    },
     revise: async (analysisId) => { await run(() => api.reviseAnalysis(analysisId)); await refresh(); },
     reviseDraft: async (draftId, instruction) => {
       const r = await run(() => api.rewrite(draftId, { instruction }));

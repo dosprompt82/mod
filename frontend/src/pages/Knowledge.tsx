@@ -86,6 +86,8 @@ export default function Knowledge() {
   const [tag, setTag] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [wsFilter, setWsFilter] = useState("");
+  const { data: wsList } = useQuery({ queryKey: ["workspaces", "all"], queryFn: () => api.workspaces(undefined, 200) });
   const [showFilters, setShowFilters] = useState(false);
   const [category, setCategory] = useState("");
   const [editing, setEditing] = useState<Partial<KnowledgeItem> | null>(null);
@@ -94,10 +96,10 @@ export default function Knowledge() {
   const qc = useQueryClient();
   const toast = useToast();
 
-  const searching = !!(submitted || kinds || provenance || doctype || tag || from || to);
+  const searching = !!(submitted || kinds || provenance || doctype || tag || from || to || wsFilter);
   const { data: results, isFetching } = useQuery({
-    queryKey: ["search", submitted, kinds, provenance, doctype, tag, from, to],
-    queryFn: () => api.search({ q: submitted, kinds, provenance, doctype, tag, date_from: from, date_to: to, limit: "50" }),
+    queryKey: ["search", submitted, kinds, provenance, doctype, tag, from, to, wsFilter],
+    queryFn: () => api.search({ q: submitted, kinds, provenance, doctype, tag, date_from: from, date_to: to, workspace_id: wsFilter, limit: "50" }),
     enabled: searching,
   });
   const { data: items } = useQuery({ queryKey: ["knowledge", category], queryFn: () => api.knowledge(category || undefined) });
@@ -134,6 +136,10 @@ export default function Knowledge() {
           <label className="text-xs"><span className="label">Document type</span>
             <select className="input" value={doctype} onChange={(e) => setDoctype(e.target.value)}>
               <option value="">Any</option>{["pdf", "docx", "txt", "md", "image"].map((d) => <option key={d} value={d}>{d.toUpperCase()}</option>)}
+            </select></label>
+          <label className="text-xs"><span className="label">Workspace</span>
+            <select className="input" value={wsFilter} onChange={(e) => setWsFilter(e.target.value)}>
+              <option value="">All workspaces</option>{wsList?.workspaces.map((w) => <option key={w.id} value={w.id}>{w.title}</option>)}
             </select></label>
           <label className="text-xs"><span className="label">Tag</span><input className="input" value={tag} onChange={(e) => setTag(e.target.value)} /></label>
           <label className="text-xs"><span className="label">From</span><input type="date" className="input" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
