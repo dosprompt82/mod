@@ -1,0 +1,7 @@
+I've read the draft and I think the conclusion is right, but the reasoning gets there by a longer road than it needs to. The contract has one performance obligation that matters here. Everything else follows from that.
+
+Two things would make it stronger. First, say plainly why the implementation isn't distinct: the customer can't benefit from it on its own, and nobody else could perform it. Second, deal with the termination clause up front, because it changes the contract term and the reader will ask about it.
+
+I'd cut the history section. It's accurate, but nobody reading this needs it to make the decision.
+
+Happy to talk it through tomorrow if that's easier. Otherwise send me the next version and I'll turn it around the same day.
