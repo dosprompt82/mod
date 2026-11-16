@@ -39,7 +39,9 @@ ACTIONS = {"analyze", "reply", "review_document", "challenge", "memo", "summariz
 _RX = {
     "review": re.compile(r"\b(challenge|critique|poke holes|stress[- ]?test|devil'?s advocate|weak(ness|nesses)? in|find (the )?(flaws|holes)|"
                          r"review (your|the|this|my) (conclusion|analysis|reasoning|memo|draft|answer)|what('s| is) wrong with)", re.I),
-    "memo": re.compile(r"\b(memo|memorandum|position paper|technical write-?up)\b", re.I),
+    # A memo is a requested deliverable only when the user asks for one to be written ("review this memo" is not).
+    "memo": re.compile(r"\b(prepare|write|draft|create|produce|turn (this|it) into|put (this|it) (in|into))\b[^.?!]{0,40}"
+                       r"\b(memo|memorandum|position paper|technical write-?up)\b|\b(memo|memorandum) (on|about|to|for|summari[sz]ing)\b", re.I),
     "email": re.compile(r"\b(e-?mails?|reply|respond|response to (them|him|her)|what (do(es)? )?(they|he|she) (actually |really )?wants?|"
                         r"draft (my|a) (response|reply)|thread|inbox|get back to)\b", re.I),
     "knowledge": re.compile(r"\b(my (notes|knowledge|saved|files)|in my (records|knowledge)|have i (ever|seen|decided|written)|"

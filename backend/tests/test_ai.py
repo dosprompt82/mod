@@ -272,6 +272,10 @@ def test_rewrite_creates_versions(consented):
     ("What did I decide about the lease last time?", False, False, False, ["knowledge"]),
     ("Review my work from the last two weeks and tell me where I'm wasting time.", False, False, False, ["strategy"]),
     ("Challenge this.", False, False, True, ["review"]),
+    ("Review this debt memo as a technical reviewer and challenge your own conclusions.", True, False, False, ["document", "review"]),
+    ("Is the accounting in this memo right?", True, False, False, ["document"]),
+    ("Prepare a memo on the covenant breach", True, False, False, ["document", "memo"]),
+    ("Turn this into a memo for the audit committee", False, False, True, ["memo"]),
 ])
 def test_routing(text, docs, imgs, prior, expected):
     assert plan(text, None, None, docs, imgs, prior) == expected

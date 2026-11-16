@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 APP_NAME = "Personal Superpower"
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 
 
 class Settings:

@@ -2,6 +2,9 @@
 
 Versions follow `major.minor.patch`. The running version is shown in Settings → Application.
 
+## 1.1.2 (2026-11-16)
+- Fixed: mentioning a memo ("review this memo") no longer makes the app write a new memo; it only drafts one when you ask it to ("prepare a memo…").
+
 ## 1.1.1 (2026-11-16)
 - Fixed (Windows): exporting to DOCX, PDF, Markdown or TXT failed because of a date format Windows doesn't support.
 - Fixed (Windows): restoring a backup could fail because Windows won't replace an open file.
