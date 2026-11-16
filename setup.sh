@@ -28,7 +28,12 @@ say "2/3  Interface dependencies (Node $(node -v))"
 (cd frontend && npm ci --no-audit --no-fund --loglevel=error)
 
 say "3/3  Building the interface"
-(cd frontend && npm run build --silent >/dev/null)
+BUILD_LOG="$(mktemp)"
+if ! (cd frontend && npm run build >"$BUILD_LOG" 2>&1); then
+  tail -n 30 "$BUILD_LOG" >&2
+  fail "The interface could not be built (details above)."
+fi
+rm -f "$BUILD_LOG"
 
 backend/.venv/bin/python tools/setup_stamp.py write
 say "Setup complete. Start the app with ./start.sh (macOS: double-click start.command)."
