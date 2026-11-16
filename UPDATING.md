@@ -43,7 +43,7 @@ It only works if you installed with GitHub Desktop or Git, not from a ZIP.
 
 ### Option 3: you installed from a ZIP
 1. Close the app and make a backup (Settings → Privacy → **Create backup**) before closing.
-2. Download the new ZIP (INSTALL.md, Step 4, option B) and unzip it to a **new** folder.
+2. Download the new ZIP (INSTALL.md, Step 3, "Alternative: download a ZIP") and unzip it to a **new** folder.
 3. From the **old** folder, move these into the new folder:
    - the **`data`** folder (all your work);
    - the **`.env`** file, if you created one. It's hidden: on a Mac press **Cmd + Shift + .** in Finder to show hidden files; on Windows, View → **Hidden items**.

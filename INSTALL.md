@@ -2,7 +2,7 @@
 
 This guide assumes you've never installed developer software before. It takes about **20 minutes, once**. After that, starting the app is a double-click.
 
-You'll install three free programs, download the app, and connect it to the AI.
+You'll install three free programs (Python, Node.js, GitHub Desktop), download the app, start it, and connect it to the AI.
 
 | You need | Why |
 |---|---|
@@ -36,29 +36,61 @@ You'll install three free programs, download the app, and connect it to the AI.
 1. Go to **https://nodejs.org/** and click the big **LTS** download button.
 2. Open the downloaded file and click through the installer, accepting the defaults.
 
-## Step 3: Install GitHub Desktop (gets the app, and later its updates, in one click)
+## Step 3: Install GitHub Desktop and download the app
 
-1. Go to **https://desktop.github.com/** and download GitHub Desktop.
-2. Open it and **sign in** with your GitHub account.
+**What this step does.** The app's code is stored on **GitHub**, a website for storing code, in a project (a "repository") called **`dosprompt82/mod`**. **GitHub Desktop** is a free program that copies that project onto your computer ("cloning") and, later, downloads new versions with two clicks. You won't write any code or use any of its advanced features.
 
-> Prefer not to install this? You can download a ZIP instead (Step 4, option B), but every future update will be a manual copy-and-paste job.
+### 3a. Download and install GitHub Desktop
 
-## Step 4: Download the app
+**Mac**
+1. Go to **https://desktop.github.com/** and click **Download for macOS**.
+2. Open your **Downloads** folder. Double-click the downloaded file (`GitHubDesktop-….zip`) if it hasn't unzipped by itself. You'll get an app called **GitHub Desktop**.
+3. Drag **GitHub Desktop** into your **Applications** folder (in the Finder sidebar).
+4. Open it from Applications. If macOS asks *"GitHub Desktop is an app downloaded from the Internet. Are you sure you want to open it?"*, click **Open**.
 
-**Option A: with GitHub Desktop (recommended)**
-1. In GitHub Desktop: **File → Clone repository…**
-2. Click the **GitHub.com** tab and select **dosprompt82/mod**.
-3. Under **Local path**, choose a place you'll remember, e.g. your **Documents** folder. Click **Clone**.
-4. At the top, click **Current branch** and choose **`claude/new-session-nyeqzu`**. (That's the branch the app is on.)
-5. Click **Repository → Show in Finder** (Mac) or **Show in Explorer** (Windows). This is the app's folder.
+**Windows**
+1. Go to **https://desktop.github.com/** and click **Download for Windows**.
+2. Open the downloaded file (`GitHubDesktopSetup-x64.exe`). It installs by itself, with no questions, and opens when it's done (about 30 seconds).
 
-**Option B: as a ZIP**
-1. Go to **https://github.com/dosprompt82/mod** (sign in).
-2. Click the branch button (it says **main**) and choose **`claude/new-session-nyeqzu`**.
-3. Click the green **Code** button → **Download ZIP**.
-4. Unzip it (double-click on Mac; right-click → **Extract All** on Windows) and move the folder to your **Documents** folder.
+### 3b. Sign in to GitHub
 
-## Step 5: Start it for the first time
+1. On the **Welcome to GitHub Desktop** screen, click **Sign in to GitHub.com**. Your web browser opens.
+2. Sign in with the GitHub account that owns or has access to `dosprompt82/mod`. Don't have a GitHub account yet? Create one on that page, then ask the owner of `dosprompt82/mod` to add you.
+3. The browser shows **Authorize GitHub Desktop**. Click **Authorize desktop**.
+4. Your browser then asks whether to open GitHub Desktop. Click **Open GitHub Desktop** (Mac) / **Open** (Windows). You're back in GitHub Desktop.
+5. A **Configure Git** screen appears, asking for a name and email. Leave the suggested option (**Use my GitHub account name and email address**) and click **Finish**.
+   These are only labels for changes you make yourself, which you won't be doing.
+
+### 3c. Download ("clone") the app
+
+1. You now see **Let's get started!** On the right is a list called **Your repositories**. Click **dosprompt82/mod**, then click the blue **Clone dosprompt82/mod** button.
+   - Don't see it in the list? Use the menu instead: **File → Clone repository…**, click the **URL** tab, and paste `https://github.com/dosprompt82/mod`.
+2. A **Clone a repository** window opens. The bottom box, **Local path**, is where the app's folder will be created. Click **Choose…**, pick your **Documents** folder, and click **Select Folder** / **Open**. The box now ends in `Documents/mod` (Mac) or `Documents\mod` (Windows).
+3. Click **Clone**. A progress bar runs for a few seconds to a minute.
+4. When it's finished, the top bar shows **Current repository: mod** and **Current branch: claude/new-session-nyeqzu**.
+   - That branch is the app's version line and is selected automatically.
+   - If the branch shows anything else, click **Current branch** and choose **claude/new-session-nyeqzu** from the list. You can type `claude` in the filter box to find it.
+   - The middle of the window says *"No local changes"*. That's correct.
+
+### 3d. Open the app's folder
+
+Click **Show in Finder** (Mac) / **Show in Explorer** (Windows) in the middle of the window. You can also use the menu: **Repository → Show in Finder / Explorer**.
+
+You should see folders called `backend`, `frontend` and `demo-data`, and files including **`start.command`**, **`start.bat`**, `INSTALL.md` and `README.md`. This is the app. Leave it where it is.
+
+> **Tips**
+> - **Your work is never uploaded.** The `data` folder, where all your workspaces and files will live, is excluded from GitHub, so GitHub Desktop can't upload it.
+> - **Don't edit files in this folder.** If the left panel in GitHub Desktop ever lists "Changes", don't click **Commit** or **Push**. Just ignore it, or ask for help.
+> - **You can close GitHub Desktop now.** You'll open it again only to get updates (see UPDATING.md).
+
+### Alternative: download a ZIP instead (no GitHub Desktop)
+1. Go to **https://github.com/dosprompt82/mod** and sign in. The branch button near the top left should say **claude/new-session-nyeqzu**; if not, click it and choose that branch.
+2. Click the green **Code** button → **Download ZIP**.
+3. Unzip it: double-click it on a Mac; on Windows, right-click → **Extract All**. Move the folder to **Documents**.
+
+With a ZIP, every future update is a manual copy job (UPDATING.md, Option 3), which is why GitHub Desktop is recommended.
+
+## Step 4: Start it for the first time
 
 **Mac**
 1. In the app's folder, double-click **`start.command`**.
@@ -76,7 +108,7 @@ You'll install three free programs, download the app, and connect it to the AI.
 
 > **Keep the Terminal / black window open** while you use the app; it *is* the app. Closing it (or pressing **Ctrl + C** in it) stops the app.
 
-## Step 6: Connect the AI
+## Step 5: Connect the AI
 
 1. Go to **https://console.anthropic.com/** and sign up or log in.
 2. Under **Billing**, add a payment method and some credit (a few dollars is plenty to start).
@@ -87,7 +119,7 @@ You'll install three free programs, download the app, and connect it to the AI.
 
 The key is saved only on your computer and is never shown again in full.
 
-## Step 7: Try it
+## Step 6: Try it
 
 - **Explore with sample material:** Settings → Application → **Load demo workspaces**. Open one from the left sidebar and type the suggested request.
 - **Use a real email:** take a screenshot of the email straight to your clipboard:
@@ -117,7 +149,7 @@ Your work is saved automatically as you go.
 | The window flashes and closes (Windows) | Open the folder, click the address bar, type `cmd`, press Enter, then type `start.bat` and Enter. Now you can read the error. |
 | "The server stopped during startup… port 8765 is in use" | Another copy is already running (look for another Terminal/black window). Or create a file named `.env` in the folder containing `PS_PORT=8766` and use http://127.0.0.1:8766. |
 | Browser says "This site can't be reached" | The app isn't running. Start it again and keep its window open. |
-| "No Anthropic API key is configured" | Do Step 6. |
+| "No Anthropic API key is configured" | Do Step 5. |
 | "The Anthropic API key was rejected" | Copy the key again from console.anthropic.com (no spaces), remove the old one in Settings, and save the new one. |
 | "rate-limiting" or "temporarily unavailable" | Wait a minute and try again. |
 | Anything else | Settings → Application → **Health** shows diagnostics, and the log file location. Copy the error message into a Claude Code session on this repository and ask for help. |
