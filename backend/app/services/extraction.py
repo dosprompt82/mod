@@ -229,11 +229,11 @@ def extract(db: Session, att: Attachment) -> None:
                     bs, section = _blocks_from_text(text, num, section)
                     blocks.extend(bs)
             if not blocks and vision_pages:
-                att.status = "needs_vision"
+                final_status = "needs_vision"
             elif not blocks:
                 raise ValueError("No text could be extracted from this PDF.")
             else:
-                att.status = "ready"
+                final_status = "ready"
         elif att.kind == "docx":
             blocks, meta, comment_blocks = _extract_docx(data)
             text = "\n\n".join(b.text for b in blocks)
@@ -244,14 +244,14 @@ def extract(db: Session, att: Attachment) -> None:
             att.page_count = meta.get("pages_as_saved")
             if comment_blocks:
                 db.add(DocumentPage(attachment_id=att.id, page_number=None, text="\n\n".join(b.text for b in comment_blocks), text_source="comments"))
-            att.status = "ready"
+            final_status = "ready"
         elif att.kind in ("txt", "md"):
             text = _decode_text(data)
             db.add(DocumentPage(attachment_id=att.id, page_number=None, text=text))
             blocks, _ = _blocks_from_text(text, None, None, markdown=att.kind == "md")
             if not blocks:
                 raise ValueError("The file is empty.")
-            att.status = "ready"
+            final_status = "ready"
         elif att.kind == "image":
             from PIL import Image
 
@@ -261,13 +261,15 @@ def extract(db: Session, att: Attachment) -> None:
                 att.width, att.height = im.size
             att.page_count = 1
             # Images have no machine-readable text until the vision model transcribes them.
-            att.status = "needs_vision"
+            final_status = "needs_vision"
         else:
             raise ValueError(f"Unsupported kind {att.kind}")
 
-        save_chunks(db, att, _chunk(blocks), text_source="extracted")
+        save_chunks(db, att, _chunk(blocks), text_source="extracted", commit_every=200)
         if att.kind == "docx" and comment_blocks:
             save_chunks(db, att, comment_blocks, text_source="comments")
+        # Only now is the document complete (chunks may have been committed in batches above).
+        att.status = final_status
         db.commit()
     except Exception as e:  # noqa: BLE001 - report any extraction failure to the user honestly
         db.rollback()
@@ -280,13 +282,17 @@ def extract(db: Session, att: Attachment) -> None:
             db.commit()
 
 
-def save_chunks(db: Session, att: Attachment, chunks: list[Block], text_source: str) -> None:
+def save_chunks(db: Session, att: Attachment, chunks: list[Block], text_source: str, commit_every: int | None = None) -> None:
+    """commit_every: commit in batches so a very large document never holds the database's write lock for long
+    (other requests would otherwise wait). Only used where a partial result is harmless (extraction)."""
     start = max((c.ordinal for c in att.chunks), default=-1) + 1
     total = att.text_chars or 0
     for i, b in enumerate(chunks):
         ch = DocumentChunk(attachment_id=att.id, ordinal=start + i, page_number=b.page, section=b.section, text=b.text, text_source=text_source)
         db.add(ch)
         db.flush()
+        if commit_every and (i + 1) % commit_every == 0:
+            db.commit()
         total += len(b.text)
         if att.workspace_id:
             search.index(db, "chunk", str(ch.id), att.workspace_id, "ai_interpretation" if text_source == "vision" else "source_document",
@@ -310,9 +316,11 @@ def add_vision_transcription(db: Session, att: Attachment, text: str, page_numbe
         att.status = "ready"
 
 
-def index_attachment_chunks(db: Session, att: Attachment) -> None:
+def index_attachment_chunks(db: Session, att: Attachment, commit: bool = False) -> None:
     """(Re)index chunks once a staged attachment joins a workspace."""
     search.remove_many(db, "chunk", [str(c.id) for c in att.chunks])
-    for c in att.chunks:
+    for i, c in enumerate(att.chunks, start=1):
         search.index(db, "chunk", str(c.id), att.workspace_id, "ai_interpretation" if c.text_source == "vision" else "source_document",
                      att.original_filename, c.text, f"doctype:{att.kind}", att.created_at, replace=False)
+        if commit and i % 300 == 0:
+            db.commit()  # keep write transactions short for very large documents

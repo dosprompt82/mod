@@ -21,13 +21,15 @@ def engine():
     global _engine, _Session
     if _engine is None:
         settings.ensure_dirs()
-        _engine = create_engine(f"sqlite:///{settings.db_path}", connect_args={"check_same_thread": False})
+        # timeout: wait up to 60 s for another writer (e.g. a large PDF being processed) instead of failing after 5 s.
+        _engine = create_engine(f"sqlite:///{settings.db_path}", connect_args={"check_same_thread": False, "timeout": 60})
 
         @event.listens_for(_engine, "connect")
         def _fk(dbapi_conn, _):  # referential integrity
             cur = dbapi_conn.cursor()
             cur.execute("PRAGMA foreign_keys=ON")
             cur.execute("PRAGMA journal_mode=WAL")
+            cur.execute("PRAGMA busy_timeout=60000")
             cur.close()
 
         _Session = sessionmaker(bind=_engine, expire_on_commit=False)

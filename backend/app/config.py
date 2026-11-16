@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 APP_NAME = "Personal Superpower"
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 
 
 class Settings:
@@ -26,6 +26,16 @@ class Settings:
         self.default_model = os.environ.get("PS_MODEL", "claude-opus-5-5")
         self.ai_timeout_s = float(os.environ.get("PS_AI_TIMEOUT", "300"))
         self.ai_max_retries = 3
+
+    def synced_folder(self) -> str | None:
+        """Name of the cloud-sync service if the data folder is inside one (SQLite and sync folders don't mix)."""
+        p = str(self.data_dir.resolve()).lower().replace("\\", "/")
+        for marker, name in (("onedrive", "OneDrive"), ("dropbox", "Dropbox"), ("google drive", "Google Drive"), ("googledrive", "Google Drive"),
+                             ("mobile documents", "iCloud Drive"), ("icloud", "iCloud Drive"), ("library/cloudstorage", "a cloud-storage folder"),
+                             ("box sync", "Box"), ("/box/", "Box")):
+            if marker in p:
+                return name
+        return None
 
     def ensure_dirs(self) -> None:
         for d in (self.data_dir, self.files_dir, self.exports_dir, self.backups_dir):

@@ -65,7 +65,8 @@ You'll install three free programs (Python, Node.js, GitHub Desktop), download t
 
 1. You now see **Let's get started!** On the right is a list called **Your repositories**. Click **dosprompt82/mod**, then click the blue **Clone dosprompt82/mod** button.
    - Don't see it in the list? Use the menu instead: **File → Clone repository…**, click the **URL** tab, and paste `https://github.com/dosprompt82/mod`.
-2. A **Clone a repository** window opens. The bottom box, **Local path**, is where the app's folder will be created. Click **Choose…**, pick your **Documents** folder, and click **Select Folder** / **Open**. The box now ends in `Documents/mod` (Mac) or `Documents\mod` (Windows).
+2. A **Clone a repository** window opens. The bottom box, **Local path**, is where the app's folder will be created. Click **Choose…** and pick your **user folder**: `C:\Users\yourname` on Windows, or `/Users/yourname` (the folder with the house icon) on a Mac. Click **Select Folder** / **Open**. The box now ends in `yourname\mod` (Windows) or `yourname/mod` (Mac).
+   - ⚠️ **Don't use Documents, Desktop, or any OneDrive, iCloud or Dropbox folder.** Windows often syncs Documents to OneDrive, and Macs may sync it to iCloud. Sync services can lock or damage the app's database (you'd see "database is locked").
 3. Click **Clone**. A progress bar runs for a few seconds to a minute.
 4. When it's finished, the top bar shows **Current repository: mod** and **Current branch: claude/new-session-nyeqzu**.
    - That branch is the app's version line and is selected automatically.
@@ -86,7 +87,7 @@ You should see folders called `backend`, `frontend` and `demo-data`, and files i
 ### Alternative: download a ZIP instead (no GitHub Desktop)
 1. Go to **https://github.com/dosprompt82/mod** and sign in. The branch button near the top left should say **claude/new-session-nyeqzu**; if not, click it and choose that branch.
 2. Click the green **Code** button → **Download ZIP**.
-3. Unzip it: double-click it on a Mac; on Windows, right-click → **Extract All**. Move the folder to **Documents**.
+3. Unzip it: double-click it on a Mac; on Windows, right-click → **Extract All**. Move the folder into your **user folder** (`C:\Users\yourname` or `/Users/yourname`), not into Documents, Desktop or a OneDrive, iCloud or Dropbox folder.
 
 With a ZIP, every future update is a manual copy job (UPDATING.md, Option 3), which is why GitHub Desktop is recommended.
 
@@ -150,9 +151,19 @@ Your work is saved automatically as you go.
 | "The server stopped during startup… port 8765 is in use" | Another copy is already running (look for another Terminal/black window). Or create a file named `.env` in the folder containing `PS_PORT=8766` and use http://127.0.0.1:8766. |
 | Browser says "This site can't be reached" | The app isn't running. Start it again and keep its window open. |
 | "No Anthropic API key is configured" | Do Step 5. |
+| "database is locked" or "The app is busy saving a large file" | Wait a few seconds and try again. If the app's folder is inside OneDrive, Dropbox or iCloud (the app warns you on the Home screen), move it: see **Moving the app** below. |
 | "The Anthropic API key was rejected" | Copy the key again from console.anthropic.com (no spaces), remove the old one in Settings, and save the new one. |
 | "rate-limiting" or "temporarily unavailable" | Wait a minute and try again. |
 | Anything else | Settings → Application → **Health** shows diagnostics, and the log file location. Copy the error message into a Claude Code session on this repository and ask for help. |
+
+## Moving the app
+
+Do this if the app warns that it's in a OneDrive, Dropbox or iCloud folder. Your work moves with it, because it lives in the `data` folder inside.
+1. Close the app's window, and close GitHub Desktop.
+2. In File Explorer (or Finder), **cut** the app's folder (`mod`) and **paste** it into your user folder (`C:\Users\yourname` or `/Users/yourname`).
+3. Inside the moved folder, open `backend` and **delete the `.venv` folder**. Setup recreates it, and a moved copy may not work.
+4. Open GitHub Desktop. It says it can't find the repository: click **Locate…** and choose the new folder.
+5. Start the app with `start.bat` / `start.command`. It runs setup again (a few minutes), and then everything is where you left it.
 
 ## Removing the app
 

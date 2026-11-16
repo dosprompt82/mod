@@ -6,6 +6,12 @@ if exist .env ( for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
 if not defined PS_HOST set PS_HOST=127.0.0.1
 if not defined PS_PORT set PS_PORT=8765
 set URL=http://%PS_HOST%:%PS_PORT%
+echo %~dp0 | findstr /i "OneDrive Dropbox iCloud" >nul && (
+  echo.
+  echo WARNING: this folder is synced by OneDrive/Dropbox/iCloud, which can lock or damage the app's database.
+  echo Move the folder somewhere that isn't synced, e.g. C:\Users\%USERNAME%\. See INSTALL.md, "Moving the app".
+  echo.
+)
 if not exist backend\.venv\Scripts\python.exe goto setup
 if not exist frontend\dist\index.html goto setup
 backend\.venv\Scripts\python.exe tools\setup_stamp.py check && goto run

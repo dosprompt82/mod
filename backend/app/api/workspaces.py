@@ -200,7 +200,7 @@ def create_run(ws_id: str, body: RunIn, db: Session = Depends(get_db)):
                 r.db.refresh(a)
                 if len(a.chunks) > 200:
                     r.step(f"Preparing {a.original_filename} for search")
-                index_attachment_chunks(r.db, a)
+                index_attachment_chunks(r.db, a, commit=True)
         r.db.commit()
         w = r.db.get(Workspace, ws.id)
         for step in steps:

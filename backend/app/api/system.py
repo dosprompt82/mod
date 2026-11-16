@@ -43,7 +43,7 @@ def _schema_version(db: Session) -> int:
 @router.get("/health")
 def health(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
-    return {"status": "ok", "app": APP_NAME, "version": VERSION, "provider": settings.ai_provider,
+    return {"status": "ok", "app": APP_NAME, "version": VERSION, "provider": settings.ai_provider, "synced_folder": settings.synced_folder(),
             "ai_configured": settings.ai_provider == "mock" or bool(get_api_key()), "model": model_id(db)}
 
 
@@ -153,7 +153,10 @@ def diagnostics(db: Session = Depends(get_db)):
     fts = db.execute(text("SELECT count(*) FROM search_index")).scalar_one()
     integrity = db.execute(text("PRAGMA quick_check")).scalar_one()
     free = shutil.disk_usage(settings.data_dir).free
+    synced = settings.synced_folder()
     return {"counts": counts, "search_index_rows": fts, "database_check": integrity, "disk_free_bytes": free,
+            "storage_warning": (f"Your data folder is inside {synced}. Sync services can lock or corrupt the database. "
+                                "Move the app folder somewhere that isn't synced (see INSTALL.md).") if synced else None,
             "recent_failures": [{"at": r.created_at.isoformat(), "workflow": r.workflow, "error": r.error_message} for r in failed],
             "log_file": str(settings.data_dir / "logs" / "app.log")}
 

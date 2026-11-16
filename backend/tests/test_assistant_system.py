@@ -175,3 +175,31 @@ def test_older_version_refuses_newer_data(client):
         conn.execute(text("DELETE FROM schema_version WHERE version = 999"))
     with pytest.raises(backups.BackupError, match="newer version"):
         backups.restore_backup(data)
+
+
+def test_waits_for_a_busy_database_instead_of_failing(client):
+    """A long write elsewhere (e.g. a huge PDF being saved) must not make other requests fail."""
+    import sqlite3
+    import threading
+    import time
+
+    from app.config import settings
+
+    con = sqlite3.connect(settings.db_path, check_same_thread=False)
+    con.execute("BEGIN IMMEDIATE")  # take the write lock
+    threading.Timer(6.5, con.commit).start()  # longer than SQLite's old 5-second default
+    t0 = time.monotonic()
+    r = client.post("/api/workspaces", json={"title": "Waited"})
+    assert r.status_code == 201 and time.monotonic() - t0 > 5
+    con.close()
+
+
+def test_synced_folder_detection(monkeypatch, tmp_path):
+    from pathlib import Path
+
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "data_dir", Path("C:/Users/joshu/OneDrive/Documents/mod/data"))
+    assert settings.synced_folder() == "OneDrive"
+    monkeypatch.setattr(settings, "data_dir", tmp_path)
+    assert settings.synced_folder() is None

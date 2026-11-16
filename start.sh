@@ -7,6 +7,11 @@ if [ -f .env ]; then set -a; . ./.env; set +a; fi
 HOST="${PS_HOST:-127.0.0.1}"
 PORT="${PS_PORT:-8765}"
 URL="http://${HOST}:${PORT}"
+case "$ROOT" in
+  *OneDrive*|*Dropbox*|*"Mobile Documents"*|*CloudStorage*|*iCloud*)
+    echo "WARNING: this folder is synced by a cloud service, which can lock or damage the app's database."
+    echo "Move it somewhere that isn't synced (e.g. your home folder). See INSTALL.md, 'Moving the app'." ;;
+esac
 PYBIN="$ROOT/backend/.venv/bin/python"
 
 open_browser() {

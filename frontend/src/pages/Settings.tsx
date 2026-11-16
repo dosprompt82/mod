@@ -267,6 +267,7 @@ export default function Settings() {
           <Row label="Health">
             {diag ? (
               <div className="space-y-1 text-sm">
+                {diag.storage_warning && <div className="rounded-md border border-warn/30 bg-warn-soft px-2.5 py-1.5 text-warn">{diag.storage_warning}</div>}
                 <div>Database check: <span className={diag.database_check === "ok" ? "text-ok" : "text-danger"}>{diag.database_check}</span> · {diag.search_index_rows.toLocaleString()} indexed passages · {fileSize(diag.disk_free_bytes)} free</div>
                 <div className="text-xs text-muted">{Object.entries(diag.counts).map(([k, v]) => `${v} ${k.replace("_", " ")}`).join(" · ")}</div>
                 {diag.recent_failures.length > 0 && (

@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -126,6 +127,17 @@ async def validation_error(_: Request, exc: RequestValidationError):
     first = exc.errors()[0] if exc.errors() else {}
     field = ".".join(str(x) for x in first.get("loc", [])[1:]) or "request"
     return JSONResponse({"detail": {"message": f"Invalid {field}: {first.get('msg', 'invalid value')}.", "code": "validation"}}, status_code=422)
+
+
+@app.exception_handler(OperationalError)
+async def db_busy(_: Request, exc: OperationalError):
+    if "locked" in str(exc).lower() or "busy" in str(exc).lower():
+        log.warning("database busy: %s", type(exc).__name__)
+        return JSONResponse({"detail": {"message": "The app is busy saving a large file. Wait a few seconds and try again. "
+                             "If this keeps happening, move the app out of a OneDrive/Dropbox/iCloud folder (see Settings → Application).",
+                             "code": "busy"}}, status_code=503)
+    log.exception("database error")
+    return JSONResponse({"detail": {"message": "A database error occurred. Details were written to the application log.", "code": "db_error"}}, status_code=500)
 
 
 @app.exception_handler(Exception)

@@ -56,7 +56,7 @@ export interface RunRequest {
 }
 
 export const api = {
-  health: () => get<{ status: string; provider: string; ai_configured: boolean; model: string; version: string }>("/api/health"),
+  health: () => get<{ status: string; provider: string; ai_configured: boolean; model: string; version: string; synced_folder?: string | null }>("/api/health"),
   // workspaces
   workspaces: (status?: string, limit = 50) => get<{ workspaces: WorkspaceSummary[] }>(`/api/workspaces${qs({ status, limit })}`),
   workspace: (id: string) => get<WorkspaceDetail>(`/api/workspaces/${id}`),
@@ -124,7 +124,7 @@ export const api = {
   setApiKey: (api_key: string | null) => put<{ key_configured: boolean; key_masked: string | null }>("/api/settings/api-key", { api_key }),
   consent: (accepted: boolean) => post<{ consent: boolean }>("/api/settings/consent", { accepted }),
   testConnection: () => post<{ ok: boolean; message: string; model: string }>("/api/settings/test-connection"),
-  diagnostics: () => get<{ counts: Record<string, number>; search_index_rows: number; database_check: string; disk_free_bytes: number;
+  diagnostics: () => get<{ counts: Record<string, number>; search_index_rows: number; database_check: string; disk_free_bytes: number; storage_warning?: string | null;
     recent_failures: { at: string; workflow: string; error: string }[]; log_file: string }>("/api/diagnostics"),
   audit: () => get<{ events: { at: string; action: string; entity_type: string | null; entity_id: string | null }[] }>("/api/audit?limit=40"),
   backups: () => get<{ backups: { name: string; size_bytes: number; created_at: string }[]; location: string }>("/api/backups"),

@@ -2,6 +2,11 @@
 
 Versions follow `major.minor.patch`. The running version is shown in Settings → Application.
 
+## 1.3.1 (2026-11-16)
+- Fixed: "database is locked" when starting a request while large PDFs were still being processed. The app now waits for the database (up to 60 seconds) and saves large documents in short steps, so it never holds the database for long.
+- If the database is still busy, you get a plain message instead of an error.
+- The app warns, on the Home screen, in Settings and when it starts, if it's running from a OneDrive, Dropbox or iCloud folder. INSTALL.md now recommends your user folder, with steps for moving an existing install.
+
 ## 1.3.0 (2026-11-16)
 - New **Document review** mode for reviewing someone else's memo or report. Ask "Review this memo…", or use the Review a document button or the Document review workflow. The output follows a reviewer's format:
   - a scope note: what was reviewed, Word comments and tracked changes, and missing source documents;

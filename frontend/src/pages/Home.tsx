@@ -57,6 +57,12 @@ export default function Home() {
           <ArrowRight className="ml-auto h-4 w-4" />
         </Link>
       )}
+      {health?.synced_folder && (
+        <div className="mb-4 rounded-lg border border-warn/30 bg-warn-soft px-3 py-2 text-sm text-warn" role="alert">
+          The app is running from a {health.synced_folder} folder. Sync services can lock or damage its database. Move the app's folder somewhere
+          that isn't synced (for example C:\Users\yourname\ on Windows, or your home folder on a Mac). See INSTALL.md → "Moving the app".
+        </div>
+      )}
       <UniversalInput variant="hero" onSubmit={onSubmit} autoFocus />
       {today && today.items.length > 0 && (
         <Link to="/decisions" className="mt-4 flex items-center gap-2 rounded-lg px-1 text-sm text-muted hover:text-ink">
