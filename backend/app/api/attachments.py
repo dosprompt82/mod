@@ -106,10 +106,10 @@ def attachment_content(att_id: str, download: bool = False, db: Session = Depend
     ascii_name = a.original_filename.encode("ascii", "ignore").decode().replace('"', "") or "file"
     disp = f"{'inline' if inline else 'attachment'}; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(a.original_filename)}"
     mime = "text/plain; charset=utf-8" if a.kind in ("txt", "md") else a.mime_type
-    return FileResponse(path, media_type=mime, headers={
-        "Content-Disposition": disp, "X-Content-Type-Options": "nosniff",
-        "Content-Security-Policy": "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; object-src 'self'",
-        "Cache-Control": "private, max-age=3600"})
+    headers = {"Content-Disposition": disp, "X-Content-Type-Options": "nosniff", "Cache-Control": "private, max-age=3600"}
+    if a.kind != "pdf":  # browsers refuse to run their PDF viewer inside a sandboxed response
+        headers["Content-Security-Policy"] = "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'"
+    return FileResponse(path, media_type=mime, headers=headers)
 
 
 @router.post("/attachments/{att_id}/retry")
