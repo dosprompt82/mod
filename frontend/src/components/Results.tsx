@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookmarkPlus, CheckSquare, FileText, GitCompare, ListChecks, MessagesSquare, Send, ShieldQuestion, Swords } from "lucide-react";
+import { AlertTriangle, BookmarkPlus, Check, CheckSquare, Copy, FilePenLine, FileText, GitCompare, ListChecks, MessagesSquare, Send, ShieldQuestion, Swords } from "lucide-react";
 import { api, ApiError } from "../lib/api";
-import type { ActionItem, Analysis, AnalysisContent, DecisionItem, Draft, EmailContent, Review, WorkspaceDetail } from "../lib/types";
+import type { ActionItem, Analysis, AnalysisContent, DecisionItem, DocReviewContent, Draft, EmailContent, Review, WorkspaceDetail } from "../lib/types";
+import { copyText } from "../lib/format";
 import { useToast } from "./useToast";
 import { DraftEditor } from "./DraftEditor";
 import { Markdown } from "./Markdown";
@@ -15,6 +16,7 @@ import { BulletList, Collapsible, MockNotice, SeverityBadge, Spinner } from "./u
 export interface ResultActions {
   challenge: (type: "analysis" | "draft", id: string) => void;
   memo: () => void;
+  reviseDocument: () => void;
   deliverable: (action: "talking_points" | "follow_up") => void;
   revise: (analysisId: string) => Promise<void>;
   reviseDraft: (draftId: string, instruction: string) => Promise<void>;
@@ -335,6 +337,132 @@ export function DraftResult({ d, act }: { d: Draft; act: ResultActions }) {
       <div className="flex flex-wrap gap-2">
         <button className="btn-secondary btn-sm" onClick={() => act.challenge("draft", d.id)}><Swords className="h-3.5 w-3.5" /> Challenge this</button>
         <Link className="btn-ghost btn-sm" to={`/drafts/${d.id}`}>Version history</Link>
+      </div>
+    </article>
+  );
+}
+
+const ASSESS: Record<string, string> = {
+  agree: "text-ok", agree_with_changes: "text-ink", disagree: "text-danger", incomplete: "text-warn", not_addressed: "text-warn",
+};
+
+function CopyButton({ text, label = "Copy", testId }: { text: string; label?: string; testId?: string }) {
+  const toast = useToast();
+  const [done, setDone] = useState(false);
+  return (
+    <button className="btn-ghost btn-sm" data-testid={testId} onClick={async () => {
+      const ok = await copyText(text);
+      setDone(ok);
+      toast(ok ? "Copied" : "Couldn't access the clipboard.", ok ? "ok" : "error");
+      setTimeout(() => setDone(false), 1500);
+    }}>{done ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {label}</button>
+  );
+}
+
+export function DocReviewResult({ a, act }: { a: Analysis; act: ResultActions }) {
+  const c = a.content as DocReviewContent;
+  const save = useSaver();
+  const findings = c.findings ?? [];
+  const prim = findings.filter((f) => f.tier === "primary");
+  const sec = findings.filter((f) => f.tier !== "primary");
+  const noun = `${c.document_name} ${c.document_description}`.toLowerCase().includes("memo") ? "Memo" : "Document";
+  const anchor = (id: string) => `rv-${a.id}-${id}`;
+  const jump = (id: string) => document.getElementById(anchor(id))?.scrollIntoView({ behavior: "smooth", block: "center" });
+  const scoreTone = c.score >= 8 ? "text-ok" : c.score >= 6 ? "text-warn" : "text-danger";
+  const allComments = findings.map((f) => `${f.id}. ${f.location || f.title}\n\n${f.comment.trim()}`).join("\n\n");
+  const reasons = c.score_reasons ?? [];
+  return (
+    <article className="space-y-6" data-testid="doc-review-result">
+      <MockNotice provider={a.provider} />
+      <header>
+        <h3 className="font-serif text-xl font-semibold">{c.document_description}</h3>
+        {c.scope_note && <p className="mt-1 text-sm text-muted">{c.scope_note}</p>}
+        {c.selection?.excerpted?.length ? (
+          <p className="mt-1 text-xs text-faint">Read in full: {c.selection.full.join(", ") || "none"}. Reference excerpts ({c.selection.passages} passages) from {c.selection.excerpted.join(", ")}.</p>
+        ) : null}
+      </header>
+      <section className="flex flex-col gap-4 sm:flex-row">
+        <div className="flex shrink-0 items-baseline gap-1 self-start rounded-xl border border-line px-5 py-3" aria-label={`Score ${c.score} out of 10`}>
+          <span className={`font-serif text-4xl font-semibold ${scoreTone}`} data-testid="review-score">{c.score}</span><span className="text-muted">/10</span>
+        </div>
+        <div className="space-y-2 text-[0.95rem] leading-relaxed">
+          {c.strengths?.length > 0 && <p>{c.strengths.join(" ")}</p>}
+          {reasons.length > 0 && (
+            <div>
+              <p>It loses points for {reasons.length} reason{reasons.length === 1 ? "" : "s"}:</p>
+              <ol className="mt-1 list-decimal space-y-1 pl-5">{reasons.map((r, i) => <li key={i}>{r}</li>)}</ol>
+            </div>
+          )}
+          {c.presentation_notes?.length > 0 && <p className="text-muted">{c.presentation_notes.join(" ")}</p>}
+        </div>
+      </section>
+      <section><div className="eyebrow mb-1">Elevator pitch</div><p className="font-serif text-[1.05rem] leading-relaxed">{c.elevator_pitch}</p></section>
+      {c.key_questions?.length > 0 && (
+        <section>
+          <div className="eyebrow mb-2">Key questions and conclusions</div>
+          <div className="overflow-x-auto rounded-lg border border-line">
+            <table className="w-full text-sm" data-testid="key-questions">
+              <thead className="bg-sunken text-left text-xs text-muted">
+                <tr><th className="px-3 py-2 font-medium">Issue</th><th className="px-3 py-2 font-medium">{noun} conclusion</th><th className="px-3 py-2 font-medium">My view</th></tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {c.key_questions.map((q, i) => (
+                  <tr key={i} className="align-top">
+                    <td className="px-3 py-2"><span className="font-mono text-xs text-muted">{q.ref}.</span> {q.topic}</td>
+                    <td className="px-3 py-2">{q.document_conclusion}</td>
+                    <td className={`px-3 py-2 ${ASSESS[q.assessment] ?? ""}`}>
+                      {q.reviewer_view}
+                      {q.findings?.map((f) => <button key={f} className="ml-1 font-mono text-xs text-accent hover:underline" onClick={() => jump(f)}>{f}</button>)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+      <section>
+        <div className="eyebrow mb-2">Issues by tier</div>
+        {[["Primary", prim], ["Secondary", sec]].map(([label, list]) => (list as typeof findings).length > 0 && (
+          <div key={label as string} className="mb-3">
+            <div className="mb-1 text-sm font-semibold">{label as string}</div>
+            <ul className="space-y-1.5 text-[0.94rem]">
+              {(list as typeof findings).map((f) => (
+                <li key={f.id}><button className="text-left hover:text-accent" onClick={() => jump(f.id)}><span className="font-semibold">{f.id}. {f.title}.</span> {f.summary}</button></li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </section>
+      {findings.length > 0 && (
+        <section>
+          <div className="mb-2 flex items-center gap-2">
+            <div className="eyebrow">Paste-ready comments</div>
+            <span className="ml-auto"><CopyButton text={allComments} label="Copy all comments" testId="copy-all-comments" /></span>
+          </div>
+          <div className="space-y-3">
+            {findings.map((f) => (
+              <div key={f.id} id={anchor(f.id)} className="scroll-mt-24 rounded-lg border border-line bg-surface p-4">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className={`badge ${f.tier === "primary" ? "bg-danger-soft text-danger" : "bg-sunken text-muted"}`}>{f.id}</span>
+                  <span className="text-sm font-semibold">{f.location || f.title}</span>
+                  <span className="ml-auto"><CopyButton text={f.comment.trim()} testId={`copy-${f.id}`} /></span>
+                </div>
+                <p className="whitespace-pre-wrap font-serif text-[0.97rem] leading-relaxed">{f.comment.trim()}</p>
+                {f.guidance_cited?.length > 0 && (
+                  <p className="mt-2 text-xs text-faint">Guidance cited (verify against the current text): {f.guidance_cited.join(" · ")}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+      <div className="panel px-4 py-1"><Collapsible title="Supporting evidence" count={a.sources.length}><SourceList sources={a.sources} /></Collapsible></div>
+      <div className="flex flex-wrap gap-2">
+        <button className="btn-secondary btn-sm" onClick={act.reviseDocument}><FilePenLine className="h-3.5 w-3.5" /> Draft revised {noun.toLowerCase()}</button>
+        <button className="btn-secondary btn-sm" onClick={() => act.challenge("analysis", a.id)}><Swords className="h-3.5 w-3.5" /> Challenge this review</button>
+        <button className="btn-ghost btn-sm" onClick={() => save("analysis", a.id)}><BookmarkPlus className="h-3.5 w-3.5" /> Save to Knowledge</button>
+        <ExportMenu sourceType="analysis" sourceId={a.id} small />
       </div>
     </article>
   );

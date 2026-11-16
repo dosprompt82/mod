@@ -22,7 +22,7 @@ def attachment_dict(a: Attachment) -> dict:
         "id": a.id, "workspace_id": a.workspace_id, "filename": a.original_filename, "kind": a.kind, "mime_type": a.mime_type,
         "size_bytes": a.size_bytes, "checksum": a.checksum_sha256, "duplicate_of": a.duplicate_of, "status": a.status, "error": a.error,
         "page_count": a.page_count, "text_chars": a.text_chars, "vision_pages": vision_pages, "transcribed": transcribed,
-        "width": a.width, "height": a.height, "created_at": iso(a.created_at),
+        "width": a.width, "height": a.height, "created_at": iso(a.created_at), "doc_meta": jload(a.doc_meta, {}),
     }
 
 

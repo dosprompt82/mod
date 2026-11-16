@@ -2,7 +2,7 @@
 export const ACTIONS: { id: string; label: string; hint: string }[] = [
   { id: "analyze", label: "Analyze", hint: "What should I analyze?" },
   { id: "reply", label: "Draft a reply", hint: "Anything the reply should say or avoid?" },
-  { id: "review_document", label: "Review a document", hint: "What should I look for?" },
+  { id: "review_document", label: "Review a document", hint: "Attach the document to review (plus anything it relies on). Anything to focus on?" },
   { id: "challenge", label: "Challenge a conclusion", hint: "Paste or describe the conclusion to challenge" },
   { id: "memo", label: "Create a memo", hint: "What is the memo about, and who is it for?" },
   { id: "summarize", label: "Summarize", hint: "Anything to focus on?" },
@@ -10,7 +10,7 @@ export const ACTIONS: { id: string; label: string; hint: string }[] = [
 ];
 
 export const WORKFLOWS: { id: string; label: string }[] = [
-  { id: "", label: "Auto" }, { id: "email", label: "Email reply" }, { id: "document", label: "Document analysis" },
+  { id: "", label: "Auto" }, { id: "doc_review", label: "Document review" }, { id: "email", label: "Email reply" }, { id: "document", label: "Document analysis" },
   { id: "reasoning", label: "Expert analysis" }, { id: "review", label: "Critical review" }, { id: "memo", label: "Memo" },
   { id: "writing", label: "Writing" }, { id: "knowledge", label: "Knowledge" }, { id: "strategy", label: "Strategic review" },
 ];

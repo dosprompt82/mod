@@ -1,4 +1,5 @@
 export const WORKFLOW_LABELS: Record<string, string> = {
+  doc_review: "Document review",
   email: "Email reply", document: "Document analysis", reasoning: "Expert analysis", review: "Critical review", memo: "Memo",
   writing: "Writing", rewrite: "Revision", knowledge: "Knowledge answer", strategy: "Strategic review", revise_analysis: "Revised analysis",
   writing_profile: "Writing profile",

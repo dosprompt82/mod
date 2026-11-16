@@ -52,6 +52,9 @@ export function RightPanel({ ws, focusId }: { ws: WorkspaceDetail; focusId: stri
                     {a.status === "failed" && <AlertTriangle className="h-3 w-3" />}
                     {a.status === "ready" && a.transcribed && a.kind === "image" ? "Read by AI (transcription)" : STATUS[a.status]}
                     {a.vision_pages > 0 && a.status === "ready" && ` · ${a.vision_pages} image-only page${a.vision_pages > 1 ? "s" : ""}${a.transcribed ? " (AI-transcribed)" : ""}`}
+                    {a.kind === "docx" && a.doc_meta && (a.doc_meta.comments || a.doc_meta.tracked_insertions || a.doc_meta.tracked_deletions)
+                      ? ` · ${a.doc_meta.comments ? `${a.doc_meta.comments} comment${a.doc_meta.comments > 1 ? "s" : ""}` : ""}${(a.doc_meta.tracked_insertions || a.doc_meta.tracked_deletions) ? `${a.doc_meta.comments ? ", " : ""}tracked changes` : ""}`
+                      : ""}
                     {" · "}{fileSize(a.size_bytes)}
                   </span>
                 </button>

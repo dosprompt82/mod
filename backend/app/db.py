@@ -70,7 +70,13 @@ def _m1(conn) -> None:
     ))
 
 
-MIGRATIONS = [(1, "initial schema + FTS5 index", _m1)]
+def _m2(conn) -> None:
+    cols = {row[1] for row in conn.execute(text("PRAGMA table_info(attachments)"))}
+    if "doc_meta" not in cols:  # fresh databases already have it from migration 1's create_all
+        conn.execute(text("ALTER TABLE attachments ADD COLUMN doc_meta TEXT DEFAULT '{}'"))
+
+
+MIGRATIONS = [(1, "initial schema + FTS5 index", _m1), (2, "Word comments and tracked-change metadata", _m2)]
 LATEST_SCHEMA = MIGRATIONS[-1][0]
 
 

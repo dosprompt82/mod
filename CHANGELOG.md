@@ -2,6 +2,18 @@
 
 Versions follow `major.minor.patch`. The running version is shown in Settings → Application.
 
+## 1.3.0 (2026-11-16)
+- New **Document review** mode for reviewing someone else's memo or report. Ask "Review this memo…", or use the Review a document button or the Document review workflow. The output follows a reviewer's format:
+  - a scope note: what was reviewed, Word comments and tracked changes, and missing source documents;
+  - a score out of 10, with the reasons it lost points;
+  - an elevator pitch;
+  - a key-questions table (Issue / Memo conclusion / My view);
+  - issues by tier (primary P1…, secondary S1…);
+  - paste-ready comments, each with its own Copy button, plus Copy all.
+  It exports to Word with the same structure. "Draft revised memo" turns the review into a revised draft.
+- Document reviews always send the whole document under review (up to about 45 pages), with room left for guide excerpts.
+- Word documents: text inside tracked insertions is no longer dropped (it was before), deleted text is excluded, Word comments are read and can be cited, and the page count is taken from Word.
+
 ## 1.2.0 (2026-11-16)
 - Much better handling of large reference documents (e.g. accounting guides attached next to a memo): shorter documents such as the memo are always sent in full, and guide passages are chosen by the topics the memo discusses, not just the words of your request. Guide passages are marked as reference excerpts so the AI reviews your document against them.
 - Preparing very large PDFs for search is far faster (it no longer slows down with each additional page).

@@ -23,20 +23,26 @@ from .provider import AIError, AIProvider, AIRequest, estimate_cost
 from .schemas import WORKFLOW_SCHEMAS
 
 WORKFLOW_LABELS = {
+    "doc_review": "Document review",
     "email": "Email reply", "document": "Document analysis", "reasoning": "Expert analysis", "review": "Critical review",
     "memo": "Memo", "writing": "Writing", "rewrite": "Revision", "knowledge": "Knowledge answer", "strategy": "Strategic review",
     "writing_profile": "Writing profile", "revise_analysis": "Revised analysis",
 }
 STEP_LABELS = {
+    "doc_review": "Reviewing the document",
     "email": "Reading the email thread", "document": "Analyzing the documents", "reasoning": "Working through the question",
     "review": "Challenging the conclusion", "memo": "Drafting the memo", "writing": "Drafting", "rewrite": "Revising the draft",
     "knowledge": "Searching your knowledge", "strategy": "Reviewing your recent work", "writing_profile": "Studying your writing",
     "revise_analysis": "Revising the analysis",
 }
-USER_WORKFLOWS = ["email", "document", "reasoning", "review", "memo", "writing", "knowledge", "strategy"]
+USER_WORKFLOWS = ["doc_review", "email", "document", "reasoning", "review", "memo", "writing", "knowledge", "strategy"]
 ACTIONS = {"analyze", "reply", "review_document", "challenge", "memo", "summarize", "ask", "talking_points", "follow_up"}
 
 _RX = {
+    # A technical review of an attached document (memo, report, agreement…) that produces reviewer comments.
+    "doc_review": re.compile(r"\b(review|critique|mark up|comment on|feedback on|reviewer comments on)\b[^.?!]{0,40}\b(this|the|attached|my|our|his|her|their)\b"
+                             r"[^.?!]{0,30}\b(memo|memorandum|memos|document|draft|paper|analysis|report|agreement|contract|letter|position paper|policy|deck|proposal)\b"
+                             r"|\b(technical|senior|second)\b[^.?!]{0,30}\breview(er)?\b|\breview comments\b|\bpaste-ready comments\b", re.I),
     "review": re.compile(r"\b(challenge|critique|poke holes|stress[- ]?test|devil'?s advocate|weak(ness|nesses)? in|find (the )?(flaws|holes)|"
                          r"review (your|the|this|my) (conclusion|analysis|reasoning|memo|draft|answer)|what('s| is) wrong with)", re.I),
     # A memo is a requested deliverable only when the user asks for one to be written ("review this memo" is not).
@@ -69,11 +75,21 @@ def plan(instruction: str, action: str | None, override: str | None, has_docs: b
         return ["email"]
     if action == "memo":
         return ["document", "memo"] if (has_docs or has_images) and not has_prior else ["memo"]
-    if action in ("review_document", "summarize"):
+    if action == "review_document":
+        return ["doc_review"] if (has_docs or has_images) else ["reasoning"]
+    if action == "summarize":
         return ["document"] if (has_docs or has_images) else ["reasoning"]
     if action in ("talking_points", "follow_up"):
         return ["writing"]
 
+    if (has_docs or has_images) and _RX["doc_review"].search(t):
+        rest = _RX["doc_review"].sub(" ", t)  # "review this memo" is the review itself, not a request to challenge it
+        steps = ["doc_review"]
+        if _RX["review"].search(rest):
+            steps.append("review")
+        if _RX["memo"].search(rest):
+            steps.append("memo")
+        return steps
     wants_review = bool(_RX["review"].search(t))
     wants_memo = bool(_RX["memo"].search(t))
     if _RX["strategy"].search(t) and not (has_docs or has_images):
@@ -227,10 +243,10 @@ class Runner:
     def call(self, workflow: str, ctx: ctxmod.Context, meta: dict | None = None, schema_key: str | None = None):
         schema = WORKFLOW_SCHEMAS[schema_key or workflow]
         depth = get_pref(self.db, "analysis_depth")
-        effort = "high" if depth == "deep" and workflow in ("document", "reasoning", "review", "memo", "revise_analysis", "email") else None
+        effort = "high" if depth == "deep" and workflow in ("doc_review", "document", "reasoning", "review", "memo", "revise_analysis", "email") else None
         m = {"sources": ctx.mock_sources, "images": list(ctx.image_labels), "knowledge": list(ctx.knowledge_labels),
              "records": list(ctx.record_labels), **(meta or {})}
-        big = workflow in ("email", "document", "reasoning", "review", "memo", "writing", "revise_analysis", "knowledge")
+        big = workflow in ("doc_review", "email", "document", "reasoning", "review", "memo", "writing", "revise_analysis", "knowledge")
         req = AIRequest(workflow=workflow, system=system_prompt(workflow, schema_key), parts=ctx.parts, max_tokens=32000 if big else 16000,
                         effort=effort, meta=m)
         pages = max(1, round(ctx.source_chars / 3500))
@@ -440,6 +456,27 @@ def run_step(r: Runner, workflow: str, inp: StepInput) -> tuple[str, str]:
         _assistant_message(db, ws, run, "email", "analysis", a.id, obj.asking)
         return "analysis", a.id
 
+    if workflow == "doc_review":
+        ctx = ctxmod.build(db, ws, "doc_review", inp.instruction, inp.focus_ids)
+        obj, raw = r.call("doc_review", ctx, {"instruction": inp.instruction})
+        if obj is None:
+            return _unstructured(db, ws, run, workflow, raw, pname)
+        a = Analysis(workspace_id=ws.id if ws else None, run_id=run.id, workflow="doc_review", title=obj.title[:300],
+                     summary=f"{obj.document_description}: {obj.score:g}/10. {obj.elevator_pitch}"[:2000], provider=pname)
+        db.add(a)
+        db.flush()
+        a.sources = r.verify(ctx, obj.evidence, ws, {"analysis_id": a.id})
+        content = obj.model_dump()
+        content["selection"] = ctx.selection
+        a.content_json = jdump(content)
+        a.markdown = render.doc_review_md(content, a.sources)
+        _index_analysis(db, a)
+        _maybe_title(ws, obj.title)
+        n_p = sum(1 for f in obj.findings if f.tier == "primary")
+        _assistant_message(db, ws, run, "doc_review", "analysis", a.id,
+                           f"{obj.document_description}: {obj.score:g}/10, {n_p} primary and {len(obj.findings) - n_p} secondary issue(s).")
+        return "analysis", a.id
+
     if workflow in ("document", "reasoning"):
         prior = ctxmod.prior_work_for(db, ws) if ws is not None and any(m.role == "assistant" for m in ws.messages) else None
         ctx = ctxmod.build(db, ws, workflow, inp.instruction, inp.focus_ids, prior_work=prior)
@@ -483,7 +520,7 @@ def run_step(r: Runner, workflow: str, inp: StepInput) -> tuple[str, str]:
     if workflow in ("memo", "writing"):
         analysis = review = None
         for rt, rid in reversed(inp.previous + r.results):
-            if rt == "analysis" and analysis is None:
+            if rt == "analysis" and analysis is None:  # includes document reviews
                 analysis = db.get(Analysis, rid)
             if rt == "review" and review is None:
                 review = db.get(Review, rid)

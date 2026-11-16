@@ -5,6 +5,7 @@ export interface Attachment {
   size_bytes: number; checksum: string; duplicate_of: string | null;
   status: "uploaded" | "extracting" | "ready" | "needs_vision" | "failed"; error: string | null;
   page_count: number | null; text_chars: number; vision_pages: number; transcribed: boolean; width: number | null; height: number | null; created_at: string;
+  doc_meta?: { comments?: number; tracked_insertions?: number; tracked_deletions?: number; pages_as_saved?: number | null };
 }
 
 export interface SourceRef {
@@ -33,6 +34,15 @@ export interface AnalysisContent {
   title: string; answer_type: "concise" | "full"; executive_conclusion: string; facts: Fact[]; key_issues: string[]; analysis: string;
   alternatives: string[]; risks: string[]; next_steps: string[]; missing_information: string[]; external_guidance_note: string | null;
   action_items: ActionItem[]; decisions: DecisionItem[];
+}
+
+export interface DocFinding { id: string; tier: "primary" | "secondary"; title: string; location: string; summary: string; comment: string; guidance_cited: string[] }
+export interface KeyQuestion { ref: string; topic: string; document_conclusion: string; reviewer_view: string;
+  assessment: "agree" | "agree_with_changes" | "disagree" | "incomplete" | "not_addressed"; findings: string[] }
+export interface DocReviewContent {
+  title: string; document_name: string; document_description: string; scope_note: string; score: number; score_reasons: string[];
+  presentation_notes: string[]; strengths: string[]; elevator_pitch: string; key_questions: KeyQuestion[]; findings: DocFinding[];
+  missing_documents: string[]; selection?: { full: string[]; excerpted: string[]; passages: number } | null;
 }
 
 export interface ReviewIssue { severity: "critical" | "high" | "medium" | "low"; category: string; issue: string; why_it_matters: string; suggestion: string }

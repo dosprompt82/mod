@@ -53,6 +53,7 @@ The key is stored in `data/secrets.json` with owner-only permissions, is shown o
 - **Home → "What's on your mind?"** Drop files, paste screenshots (Ctrl/Cmd+V), and type a request. Ctrl/Cmd+Enter sends. Each request becomes a **workspace** you can return to.
 - **Email screenshots:** "What do they actually want from me, and how should I respond?" gives you what they're asking, context, decisions, approach, a ready-to-edit draft (with Shorter / More direct / Warmer / Firmer / More diplomatic / More technical / More executive / Rewrite in my style), and uncertainties. **Copy email** copies only the draft.
 - **Documents:** ask anything; every quote is checked against the extracted text and shown with file, page and section. Click **View in document** to see it highlighted in place.
+- **Reviewing someone else's memo:** attach it (plus the agreements and guide chapters it relies on) and ask *"Review this memo as a senior technical reviewer."* You get a scope note, a score out of 10 with reasons, an elevator pitch, a key-questions table, issues by tier, and paste-ready comments with copy buttons.
 - **Challenge this** runs an independent critical review (severity-rated). **Create revised analysis** produces a new version; the original is never overwritten, and you can compare them side by side.
 - One request can chain steps: "Analyze this, identify the important issues, challenge your conclusion, and prepare a professional memo."
 - **Drafts** keep full version history with word-level comparison and export to DOCX, PDF, Markdown or TXT.

@@ -47,6 +47,30 @@ def respond(req: AIRequest) -> str:
             "evidence": _evidence(srcs, 2),
             "transcriptions": [{"source": lab, "text": f"{MOCK} image {lab} was not read.", "uncertain": ["entire image"]} for lab in images],
         }
+    elif wf == "doc_review":
+        name = next((s_["filename"] for s_ in srcs if not s_["label"].startswith("K")), "the document")
+        out = {
+            "title": f"Mock: review of {name}"[:80],
+            "document_name": name,
+            "document_description": f"{name} (mock review)",
+            "scope_note": f"{MOCK} Reviewed {name} only; the agreements it relies on were not provided.",
+            "score": 6.5,
+            "score_reasons": ["A key feature is analyzed under the wrong model.", "The issue price is never stated."],
+            "presentation_notes": ["The same analysis is repeated several times."],
+            "strengths": ["The memo covers every feature of the instrument."],
+            "elevator_pitch": f"{MOCK} The document reaches a reasonable overall conclusion, but parts of the support need work.",
+            "key_questions": [{"ref": "1", "topic": "Unit of account", "document_conclusion": "Single unit", "reviewer_view": "Agree", "assessment": "agree", "findings": []},
+                              {"ref": "2", "topic": "Embedded feature", "document_conclusion": "Not bifurcated", "reviewer_view": "Disagree with the model (P1)",
+                               "assessment": "disagree", "findings": ["P1"]}],
+            "findings": [
+                {"id": "P1", "tier": "primary", "title": "Embedded feature", "location": "Issue #2", "summary": "Analyzed under the wrong model.",
+                 "comment": "Please evaluate this feature under the correct model first and update the conclusion.\n(a) State the facts.\n(b) Cite the guidance.", "guidance_cited": []},
+                {"id": "S1", "tier": "secondary", "title": "Repetition", "location": "Issues #3–#5", "summary": "Same analysis repeated.",
+                 "comment": "Please combine the repeated analyses into one table.", "guidance_cited": []},
+            ],
+            "missing_documents": ["The agreement the memo analyzes"],
+            "evidence": _evidence(srcs, 2),
+        }
     elif wf in ("document", "reasoning", "revise_analysis"):
         facts = [{"statement": _first_sentence(s["text"]), "basis": "document", "source": s["label"]} for s in srcs[:3]]
         out = {

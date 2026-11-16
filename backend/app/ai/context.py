@@ -20,6 +20,12 @@ from .provider import ImagePart
 TEXT_BUDGET = 120_000  # characters of source text per request (~35 pages)
 PRIMARY_DOC_CHARS = 70_000  # documents up to ~20 pages are always sent in full
 PRIMARY_TOTAL = 90_000  # ...as long as together they leave room for reference excerpts
+# A document review must see the whole document (memos can run 30+ pages) plus room for guidance.
+BUDGETS = {"doc_review": (230_000, 170_000, 180_000)}
+
+
+def budgets(workflow: str) -> tuple[int, int, int]:
+    return BUDGETS.get(workflow, (TEXT_BUDGET, PRIMARY_DOC_CHARS, PRIMARY_TOTAL))
 MAX_IMAGES = 12
 MAX_PDF_VISION_PAGES = 8
 IMAGE_MAX_EDGE = 1568
@@ -93,8 +99,35 @@ def _pdf_page_png(data: bytes, page_number: int) -> bytes:
         return doc[page_number - 1].get_pixmap(dpi=144).tobytes("png")
 
 
+def _documents_block(atts: list[Attachment], selected: list, reference_ids: set[str]) -> str:
+    """A factual inventory of the files: type, length, what was sent, Word comments and tracked changes."""
+    sent: dict[str, int] = {}
+    for c, a in selected:
+        sent[a.id] = sent.get(a.id, 0) + 1
+    lines = []
+    for a in atts:
+        bits = [a.kind.upper()]
+        if a.page_count:
+            bits.append(f"{a.page_count} pages" + (" (as last saved by Word)" if a.kind == "docx" else ""))
+        if a.status == "failed":
+            bits.append("could not be read")
+        elif a.kind == "image":
+            bits.append("image, sent for the model to read")
+        elif a.id in reference_ids:
+            bits.append(f"too long to send in full; {sent.get(a.id, 0)} relevant passages sent as reference excerpts")
+        elif a.id in sent:
+            bits.append("sent in full")
+        if a.kind == "docx":
+            m = jload(a.doc_meta, {})
+            n_c, n_i, n_d = m.get("comments", 0), m.get("tracked_insertions", 0), m.get("tracked_deletions", 0)
+            bits.append(f"{n_c} Word comment{'s' if n_c != 1 else ''}" + (f" (by {', '.join(m.get('comment_authors', []))})" if n_c else ""))
+            bits.append("no tracked changes" if not (n_i or n_d) else f"tracked changes: {n_i} insertion(s), {n_d} deletion(s); text shown with changes accepted")
+        lines.append(f"- {a.original_filename}: " + "; ".join(bits))
+    return "<documents>\n" + "\n".join(lines) + "\n</documents>"
+
+
 def _source_block(label: str, ch: DocumentChunk, att: Attachment, reference: bool = False) -> str:
-    origin = "AI transcription of an image (may contain errors)" if ch.text_source == "vision" else "extracted text"
+    origin = {"vision": "AI transcription of an image (may contain errors)", "comments": "Word comment in the document"}.get(ch.text_source, "extracted text")
     attrs = f'label="{label}" document="{_attr(att.original_filename)}"'
     if reference:
         attrs += ' role="reference excerpt"'
@@ -121,15 +154,17 @@ however therefore because whether where there their they them were when what mor
 company entity date note notes table total amount amounts""".split())
 
 
-def _select_within_budget(db: Session, ws: Workspace, atts: list[Attachment], chunks: list, instruction: str, ctx: "Context"):
+def _select_within_budget(db: Session, ws: Workspace, atts: list[Attachment], chunks: list, instruction: str, ctx: "Context",
+                          workflow: str = "document"):
     """When everything doesn't fit: send the shorter documents (the memo, letter or agreement being worked on)
     in full, then fill the rest with the passages of the long documents that best match the request and the
     topics of the documents sent in full."""
+    budget_total, primary_doc, primary_total = budgets(workflow)
     sizes = {a.id: sum(len(c.text) for c in a.chunks) for a in atts}
     primary: list[Attachment] = []
     used = 0
     for a in sorted(atts, key=lambda a: sizes[a.id]):
-        if sizes[a.id] <= PRIMARY_DOC_CHARS and used + sizes[a.id] <= PRIMARY_TOTAL:
+        if sizes[a.id] <= primary_doc and used + sizes[a.id] <= primary_total:
             primary.append(a)
             used += sizes[a.id]
     primary_ids = {a.id for a in primary}
@@ -145,14 +180,14 @@ def _select_within_budget(db: Session, ws: Workspace, atts: list[Attachment], ch
         c = by_id.get(cid)
         if c is None or cid not in ref_chunk_ids or cid in keep:
             continue
-        if budget + len(c.text) > TEXT_BUDGET:
+        if budget + len(c.text) > budget_total:
             continue
         keep.add(cid)
         budget += len(c.text)
     if not ranked and not primary:  # no keyword matches at all: fall back to the opening of each document
         for a in atts:
             for c in a.chunks[:3]:
-                if budget + len(c.text) <= TEXT_BUDGET:
+                if budget + len(c.text) <= budget_total:
                     keep.add(c.id)
                     budget += len(c.text)
     selected = [ca for ca in chunks if ca[0].id in keep]
@@ -185,8 +220,10 @@ def build(db: Session, ws: Workspace | None, workflow: str, instruction: str, fo
     total = sum(len(c.text) for c, _ in chunks)
     selected = chunks
     reference_ids: set[str] = set()
-    if total > TEXT_BUDGET and ws is not None:
-        selected, reference_ids = _select_within_budget(db, ws, atts, chunks, instruction, ctx)
+    if total > budgets(workflow)[0] and ws is not None:
+        selected, reference_ids = _select_within_budget(db, ws, atts, chunks, instruction, ctx, workflow)
+    if ws is not None and ws.attachments:
+        parts.append(_documents_block(ws.attachments, selected, reference_ids))
     for i, (c, a) in enumerate(selected, start=1):
         label = f"S{i}"
         ctx.chunk_labels[label] = c.id
@@ -224,7 +261,7 @@ def build(db: Session, ws: Workspace | None, workflow: str, instruction: str, fo
                     parts.extend(_image_parts(_pdf_page_png(data, pno), f"{label}: {a.original_filename}, page {pno} (image-only page)"))
 
     # ---- saved knowledge (bounded) --------------------------------------------------------
-    if workflow in ("document", "reasoning", "email", "memo", "writing", "knowledge") and instruction.strip():
+    if workflow in ("doc_review", "document", "reasoning", "email", "memo", "writing", "knowledge") and instruction.strip():
         limit = 8 if workflow == "knowledge" else 4
         hits = search.search(db, instruction, kinds=["knowledge"], limit=limit, match="any")
         for i, h in enumerate(hits, start=1):

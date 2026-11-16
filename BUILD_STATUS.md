@@ -29,6 +29,8 @@ Last verified: 2026-11-16. Legend: **Implemented & tested** (automated tests exe
 | Documents | Source-grounded analysis, verified quotes with file/page/section, unverified quotes flagged | Implemented & tested |
 | Documents | Multi-document comparison, follow-up questions without re-upload | Implemented & tested (routing/context); quality **unverified** live |
 | Analyst | 8-step reasoning prompt, concise vs full answers, external-guidance caveats | Implemented (prompt); **unverified** live |
+| Document review | Reviewer's format: scope, score/10 with reasons, elevator pitch, key-questions table, P/S tiers, paste-ready comments (copy each/all), DOCX export, "Draft revised memo" | Implemented & tested (mock); output quality **unverified** live |
+| Extraction | Word comments, tracked changes (insertions kept, deletions excluded), page count as saved by Word | Implemented & tested |
 | Reviewer | "Challenge this" with severities, counterargument, revised conclusion; works on analyses and drafts | Implemented & tested |
 | Reviewer | Revised analysis as a new version + side-by-side comparison; original never overwritten | Implemented & tested |
 | Knowledge | SQLite FTS5 search: keywords, phrases, titles, type, provenance, dates, tags, workspace | Implemented & tested |
@@ -51,8 +53,8 @@ Last verified: 2026-11-16. Legend: **Implemented & tested** (automated tests exe
 
 | Suite | Result |
 |---|---|
-| Backend pytest | 83 passed, 1 skipped (live smoke test, needs a key) |
-| Frontend Vitest | 14 passed |
+| Backend pytest | 87 passed, 1 skipped (live smoke test, needs a key) |
+| Frontend Vitest | 15 passed |
 | TypeScript (`tsc -b`) | clean |
 | ESLint | clean |
 | Production build (`vite build`) | succeeds |

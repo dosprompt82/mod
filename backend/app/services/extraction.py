@@ -3,6 +3,7 @@ heading structure, plain text/markdown, and image metadata. Results are chunked 
 from __future__ import annotations
 
 import io
+import json
 import logging
 import re
 from dataclasses import dataclass
@@ -108,21 +109,44 @@ def _extract_pdf(data: bytes) -> tuple[list[tuple[int, str, bool]], int]:
         return pages, doc.page_count
 
 
-def _extract_docx(data: bytes) -> list[Block]:
+W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+
+def _w_text(el) -> str:
+    """Text of a Word element as it reads with tracked changes accepted: includes insertions, hyperlinks and
+    fields (w:t) and excludes deletions (w:delText). python-docx's paragraph.text drops tracked insertions."""
+    out = []
+    for node in el.iter():
+        if node.tag == W + "t":
+            out.append(node.text or "")
+        elif node.tag == W + "tab":
+            out.append("\t")
+        elif node.tag in (W + "br", W + "cr"):
+            out.append("\n")
+    return "".join(out)
+
+
+def _extract_docx(data: bytes) -> tuple[list[Block], dict, list[Block]]:
+    import zipfile
+
     import docx
-    from docx.table import Table
     from docx.text.paragraph import Paragraph
+    from lxml import etree
 
     d = docx.Document(io.BytesIO(data))
+    body = d.element.body
     blocks: list[Block] = []
     section: str | None = None
-    for el in d.element.body.iterchildren():
+    anchors: dict[str, str] = {}
+    for el in body.iterchildren():
         tag = el.tag.rsplit("}", 1)[-1]
         if tag == "p":
-            p = Paragraph(el, d)
-            text = p.text.strip()
+            text = _w_text(el).strip()
+            for ref in list(el.iter(W + "commentReference")) + list(el.iter(W + "commentRangeStart")):
+                anchors.setdefault(ref.get(W + "id"), text[:200])
             if not text:
                 continue
+            p = Paragraph(el, d)
             style = (p.style.name if p.style is not None else "") or ""
             if style.lower().startswith(("heading", "title")):
                 section = text[:300]
@@ -132,19 +156,44 @@ def _extract_docx(data: bytes) -> list[Block]:
             else:
                 blocks.append(Block(text, None, section))
         elif tag == "tbl":
-            t = Table(el, d)
             rows = []
-            for row in t.rows:
-                cells = []
-                for c in row.cells:
-                    v = c.text.strip().replace("\n", " ")
-                    if not cells or cells[-1] != v:  # merged cells repeat
-                        cells.append(v)
-                rows.append(" | ".join(cells))
+            for tr in el.iter(W + "tr"):
+                cells = [" ".join(_w_text(p).strip() for p in tc.iter(W + "p")).strip() for tc in tr.findall(W + "tc")]
+                if any(cells):
+                    rows.append(" | ".join(cells))
+            for ref in list(el.iter(W + "commentReference")) + list(el.iter(W + "commentRangeStart")):
+                anchors.setdefault(ref.get(W + "id"), "(in a table)")
             if rows:
                 blocks.append(Block("\n".join(rows), None, section))
-    # Merge consecutive short list items into one block so chunks stay readable.
-    return blocks
+
+    meta: dict = {"comments": 0, "comment_authors": [], "tracked_insertions": 0, "tracked_deletions": 0,
+                  "tracked_change_authors": [], "pages_as_saved": None}
+    ins = list(body.iter(W + "ins"))
+    dels = list(body.iter(W + "del"))
+    meta["tracked_insertions"], meta["tracked_deletions"] = len(ins), len(dels)
+    meta["tracked_change_authors"] = sorted({e.get(W + "author") for e in ins + dels if e.get(W + "author")})
+    comment_blocks: list[Block] = []
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        names = set(z.namelist())
+        if "docProps/app.xml" in names:
+            m = re.search(rb"<Pages>(\d+)</Pages>", z.read("docProps/app.xml"))
+            if m:
+                meta["pages_as_saved"] = int(m.group(1))
+        if "word/comments.xml" in names:
+            root = etree.fromstring(z.read("word/comments.xml"))
+            authors = set()
+            for c in root.iter(W + "comment"):
+                ctext = "\n".join(_w_text(p).strip() for p in c.iter(W + "p")).strip()
+                if not ctext:
+                    continue
+                author = c.get(W + "author") or "Unknown"
+                authors.add(author)
+                date = (c.get(W + "date") or "")[:10]
+                on = anchors.get(c.get(W + "id"))
+                comment_blocks.append(Block(f"Comment by {author}{f' ({date})' if date else ''}: {ctext}"
+                                            + (f"\n[On: “{on}”]" if on else ""), None, "Word comments"))
+            meta["comments"], meta["comment_authors"] = len(comment_blocks), sorted(authors)
+    return blocks, meta, comment_blocks
 
 
 def _decode_text(data: bytes) -> str:
@@ -167,6 +216,7 @@ def extract(db: Session, att: Attachment) -> None:
             db.delete(c)
         db.flush()
         blocks: list[Block] = []
+        comment_blocks: list[Block] = []
         if att.kind == "pdf":
             pages, count = _extract_pdf(data)
             att.page_count = count
@@ -185,11 +235,15 @@ def extract(db: Session, att: Attachment) -> None:
             else:
                 att.status = "ready"
         elif att.kind == "docx":
-            blocks = _extract_docx(data)
+            blocks, meta, comment_blocks = _extract_docx(data)
             text = "\n\n".join(b.text for b in blocks)
             db.add(DocumentPage(attachment_id=att.id, page_number=None, text=text))
             if not blocks:
                 raise ValueError("The Word document contains no text.")
+            att.doc_meta = json.dumps(meta)
+            att.page_count = meta.get("pages_as_saved")
+            if comment_blocks:
+                db.add(DocumentPage(attachment_id=att.id, page_number=None, text="\n\n".join(b.text for b in comment_blocks), text_source="comments"))
             att.status = "ready"
         elif att.kind in ("txt", "md"):
             text = _decode_text(data)
@@ -212,6 +266,8 @@ def extract(db: Session, att: Attachment) -> None:
             raise ValueError(f"Unsupported kind {att.kind}")
 
         save_chunks(db, att, _chunk(blocks), text_source="extracted")
+        if att.kind == "docx" and comment_blocks:
+            save_chunks(db, att, comment_blocks, text_source="comments")
         db.commit()
     except Exception as e:  # noqa: BLE001 - report any extraction failure to the user honestly
         db.rollback()
@@ -233,7 +289,7 @@ def save_chunks(db: Session, att: Attachment, chunks: list[Block], text_source: 
         db.flush()
         total += len(b.text)
         if att.workspace_id:
-            search.index(db, "chunk", str(ch.id), att.workspace_id, "source_document" if text_source == "extracted" else "ai_interpretation",
+            search.index(db, "chunk", str(ch.id), att.workspace_id, "ai_interpretation" if text_source == "vision" else "source_document",
                          att.original_filename, b.text, f"doctype:{att.kind}", att.created_at, replace=False)
     att.text_chars = total
 
@@ -258,5 +314,5 @@ def index_attachment_chunks(db: Session, att: Attachment) -> None:
     """(Re)index chunks once a staged attachment joins a workspace."""
     search.remove_many(db, "chunk", [str(c.id) for c in att.chunks])
     for c in att.chunks:
-        search.index(db, "chunk", str(c.id), att.workspace_id, "source_document" if c.text_source == "extracted" else "ai_interpretation",
+        search.index(db, "chunk", str(c.id), att.workspace_id, "ai_interpretation" if c.text_source == "vision" else "source_document",
                      att.original_filename, c.text, f"doctype:{att.kind}", att.created_at, replace=False)

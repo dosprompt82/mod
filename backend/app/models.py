@@ -108,6 +108,8 @@ class Attachment(TimestampMixin, Base):
     text_chars: Mapped[int] = mapped_column(Integer, default=0)
     width: Mapped[int | None] = mapped_column(Integer)
     height: Mapped[int | None] = mapped_column(Integer)
+    # Word documents: comment and tracked-change counts, page count as last saved by Word (migration 2).
+    doc_meta: Mapped[str] = mapped_column(Text, default="{}")
 
     workspace: Mapped[Workspace | None] = relationship(back_populates="attachments")
     pages: Mapped[list[DocumentPage]] = relationship(back_populates="attachment", cascade="all, delete-orphan", order_by="DocumentPage.page_number")

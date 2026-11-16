@@ -166,7 +166,51 @@ class StrategyOut(Lenient):
     limitations: str = ""
 
 
+class KeyQuestion(Lenient):
+    ref: str = Field(description="The document's own issue or section number(s), e.g. '1' or '3–5'")
+    topic: str = Field(description="Short name of the issue, e.g. 'Make-whole call'")
+    document_conclusion: str = Field(description="What the document concludes, in a few words")
+    reviewer_view: str = Field(description="Your short view, e.g. 'Agree', 'Agree; reasoning needs fixing', 'Disagree with the model (P1)'")
+    assessment: Literal["agree", "agree_with_changes", "disagree", "incomplete", "not_addressed"] = "agree"
+    findings: list[str] = Field([], description="Finding ids this row relates to, e.g. ['P1']")
+
+
+class DocFinding(Lenient):
+    id: str = Field(description="P1, P2… for primary; S1, S2… for secondary")
+    tier: Literal["primary", "secondary"]
+    title: str = Field(description="Short title, e.g. 'Listing Failure Step-Up'")
+    location: str = Field(description="Where in the document, using its own numbering, e.g. 'Issue #12, Listing Failure Step-Up Feature'")
+    summary: str = Field(description="One or two sentences for the issues-by-tier list")
+    comment: str = Field(description="Paste-ready comment to the preparer (plain text; may use (a), (b), (c) lists and line breaks)")
+    guidance_cited: list[str] = Field([], description="Guidance referenced in the comment, e.g. 'ASC 815-15-25-26'")
+
+
+class DocReviewOut(Lenient):
+    title: str = Field(description="Short workspace title, e.g. 'Review: West Lake Bond memo'")
+    document_name: str = Field(description="The file under review")
+    document_description: str = Field(description="e.g. 'West Lake Bond memo (draft 11/15/2026, 24 pages)'")
+    scope_note: str = Field(description="What was reviewed and its limits: Word comments/tracked changes, key documents not provided")
+    score: float = Field(description="0 to 10, one decimal")
+    score_reasons: list[str] = Field([], description="Main reasons it loses points, largest first, one sentence each")
+    presentation_notes: list[str] = Field([], description="Structure/style observations, e.g. repetition")
+    strengths: list[str] = Field([], description="What the document does well")
+    elevator_pitch: str = Field(description="3–6 sentences: transaction, the document's conclusion, your view, what most needs work")
+    key_questions: list[KeyQuestion] = []
+    findings: list[DocFinding] = []
+    missing_documents: list[str] = Field([], description="Key documents the review would need but were not provided")
+    evidence: list[Evidence] = []
+
+    @field_validator("score", mode="before")
+    @classmethod
+    def _clamp(cls, v):
+        try:
+            return max(0.0, min(10.0, round(float(v), 1)))
+        except (TypeError, ValueError):
+            return 0.0
+
+
 WORKFLOW_SCHEMAS: dict[str, type[BaseModel]] = {
+    "doc_review": DocReviewOut,
     "email": EmailAnalysis,
     "document": AnalysisOut,
     "reasoning": AnalysisOut,

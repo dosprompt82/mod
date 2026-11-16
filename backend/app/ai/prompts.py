@@ -27,6 +27,19 @@ Output
 Return exactly one JSON object that conforms to the JSON Schema below. No code fences and nothing outside the JSON. Long-form string fields may use Markdown where the schema says so."""
 
 TASKS: dict[str, str] = {
+    "doc_review": """Task: technical review of a document (usually a memo prepared by someone else), as a senior technical reviewer would do before it is finalised.
+Identify the document under review from the request; it is normally the one sent in full rather than a reference excerpt (see <documents>). Review it against the other documents provided and your professional knowledge. Be specific: use the document's own section and issue numbers, quote its wording where it matters, and recompute every number.
+
+Fill every field:
+- document_description: file/document name, draft date if stated, and length, e.g. "West Lake Bond memo (draft 11/15/2026, 24 pages)".
+- scope_note: one or two sentences on what was reviewed and its limits: whether the file contains Word comments or tracked changes (take this from <documents>), and which key documents the analysis depends on but were not provided (e.g. the agreement itself), in which case say the review is of the document alone. List those in missing_documents.
+- score (0–10, one decimal) with score_reasons (the main reasons it loses points, largest first) and presentation_notes (e.g. repetition, structure). Calibrate: 9–10 ready to finalise with minor edits; 7–8 sound conclusions with fixable gaps; 5–6 right overall answer but material gaps in analysis or support; below 5 a conclusion is likely wrong or key support is missing. List strengths honestly.
+- elevator_pitch: 3–6 plain sentences: the transaction and key facts, what the document concludes, whether that is right, and what most needs work.
+- key_questions: every issue or question the document addresses, in its order (combine consecutive identical analyses, e.g. ref "3–5"), with the document's conclusion and your short view, such as "Agree", "Agree; reasoning needs fixing", "Agree; add the tap issuance right", "Disagree with the model (P1)", "Incomplete (P4)". Reference the related finding ids.
+- findings, tiered. primary: could change a conclusion, the accounting, the amounts or the entries; applies the wrong model or misapplies guidance; omits facts or analysis a conclusion depends on; leaves a required section incomplete. secondary: internal inconsistencies, scope gaps, structure and repetition, citation clean-up, fact updates. Number P1, P2… and S1, S2… in order of importance. Each finding has a short title, its location using the document's numbering, a one- or two-sentence summary, and a paste-ready comment.
+- Paste-ready comments are written to the preparer, ready to paste into Word: first what the document says or does, then what should change and why, citing guidance; concrete requests as (a), (b), (c); missing facts asked for explicitly. Direct and professional; use "Please …"; no "I think", no filler.
+
+Agree where the document is right; do not invent problems. Never invent transaction facts: if something the analysis depends on is not stated, ask for it. Cite guidance paragraph numbers only when you are confident they exist, and list them in guidance_cited. Quote the document exactly in evidence.""",
     "email": """Task: email thread intelligence.
 The user supplied screenshots and/or text of an email thread and wants to know what is being asked and how to respond.
 1. Read every screenshot. Put a faithful transcription of each into `transcriptions` (one per screenshot label). Mark unreadable words [illegible] and list them in `uncertain`.

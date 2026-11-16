@@ -7,7 +7,7 @@ import type { Message, Run, WorkspaceDetail } from "../lib/types";
 import { timeAgo, WORKFLOW_LABELS } from "../lib/format";
 import { useAI } from "../hooks/useAI";
 import { UniversalInput, type SubmitPayload } from "../components/UniversalInput";
-import { AnalysisResult, DraftResult, EmailResult, ReviewResult, type ResultActions } from "../components/Results";
+import { AnalysisResult, DocReviewResult, DraftResult, EmailResult, ReviewResult, type ResultActions } from "../components/Results";
 import { RightPanel } from "../components/RightPanel";
 import { ConfirmDialog } from "../components/Dialog";
 import { useToast } from "../components/useToast";
@@ -106,6 +106,10 @@ export default function WorkspacePage() {
   const act: ResultActions = {
     challenge: (type, targetId) => { void send({ action: "challenge", target_type: type, target_id: targetId, instruction: "" }); },
     memo: () => { void send({ action: "memo", instruction: "Prepare a professional technical memorandum based on this analysis." }); },
+    reviseDocument: () => {
+      void send({ action: "memo", instruction: "Prepare a revised version of the reviewed document that addresses every comment in the review. "
+        + "Keep its structure, numbering and facts; where the review asks for facts that aren't available, insert [placeholders]." });
+    },
     deliverable: (action) => {
       void send({ action, instruction: action === "talking_points"
         ? "Prepare concise meeting talking points from this analysis: the position, the key reasons, likely questions and answers."
@@ -133,6 +137,7 @@ export default function WorkspacePage() {
     if (m.result_type === "analysis") {
       const a = ws.analyses.find((x) => x.id === m.result_id);
       if (!a) return null;
+      if (a.workflow === "doc_review" && a.structured) return <DocReviewResult a={a} act={act} />;
       return a.workflow === "email" && a.structured ? <EmailResult a={a} ws={ws} act={act} /> : <AnalysisResult a={a} ws={ws} act={act} />;
     }
     if (m.result_type === "review") {
