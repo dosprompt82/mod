@@ -16,9 +16,11 @@ goto run
 echo First run: setting things up (a few minutes, once)...
 call setup.bat || ( pause & exit /b 1 )
 :run
+echo.
 echo Personal Superpower is starting at %URL%
+echo Your browser will open when it's ready.
 echo Keep this window open while you use it. Close it to stop.
-start "" /b cmd /c "timeout /t 3 >nul & start "" %URL%"
+set PS_OPEN_BROWSER=1
 cd backend
 .venv\Scripts\python.exe -m uvicorn app.main:app --host %PS_HOST% --port %PS_PORT% --log-level warning
 if errorlevel 1 ( echo The server stopped. If port %PS_PORT% is in use, set PS_PORT in .env. & pause )

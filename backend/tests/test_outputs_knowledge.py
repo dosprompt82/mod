@@ -155,3 +155,13 @@ def test_save_result_to_knowledge_marks_provenance(consented):
     k = c.post("/api/knowledge/from-result", json={"source_type": "analysis", "source_id": an["id"]}).json()
     assert k["provenance"] == "user_approved" and k["source_ref"]["origin"] == "ai_generated" and k["category"] == "previous_analysis"
     assert c.get(f"/api/analyses/{an['id']}").json()["approved"] is True
+
+
+def test_no_platform_specific_date_formats():
+    """'%-d' style strftime flags crash on Windows."""
+    import pathlib
+    import re
+
+    app = pathlib.Path(__file__).resolve().parents[1] / "app"
+    offenders = [str(p) for p in app.rglob("*.py") if re.search(r"strftime\([^)]*%-", p.read_text())]
+    assert offenders == []

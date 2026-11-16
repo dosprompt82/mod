@@ -21,10 +21,12 @@ command -v npm >/dev/null 2>&1 || fail "npm was not found. It is installed with 
 
 say "1/3  Python environment ($($PY --version))"
 [ -x backend/.venv/bin/python ] || "$PY" -m venv backend/.venv
-backend/.venv/bin/python -m pip install --quiet --upgrade pip
-backend/.venv/bin/python -m pip install --quiet -r backend/requirements.txt
+echo "     Downloading and installing Python packages (about 100 MB; this can take a few minutes)…"
+backend/.venv/bin/python -m pip install --quiet --disable-pip-version-check --upgrade pip
+backend/.venv/bin/python -m pip install --quiet --disable-pip-version-check -r backend/requirements.txt \
+  || fail "Installing Python packages failed (see above). If it mentions a compiler, Rust or 'building wheel', install Python 3.13 and run this again."
 
-say "2/3  Interface dependencies (Node $(node -v))"
+say "2/3  Interface dependencies (Node $(node -v), about a minute)"
 (cd frontend && npm ci --no-audit --no-fund --loglevel=error)
 
 say "3/3  Building the interface"

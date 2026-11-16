@@ -11,6 +11,12 @@ from ..config import APP_NAME
 FONT_DIR = Path(__file__).resolve().parents[1] / "assets" / "fonts"
 
 
+def today_long() -> str:
+    """e.g. 'November 16, 2026', built by hand: the '-' date flag used on Linux/macOS crashes on Windows."""
+    d = date.today()
+    return f"{d:%B} {d.day}, {d.year}"
+
+
 @dataclass
 class Block:
     kind: str  # heading|para|bullet|number|quote|table|rule|lines
@@ -132,7 +138,7 @@ def to_markdown(doc: ExportDoc) -> str:
     if doc.subtitle:
         parts.append(f"*{doc.subtitle}*")
     if doc.show_date:
-        parts.append(f"*{date.today().strftime('%B %-d, %Y')}*")
+        parts.append(f"*{today_long()}*")
     parts.append(doc.body.strip())
     if doc.sources:
         parts.append("## Sources\n\n" + "\n".join(f"{i}. {s}" for i, s in enumerate(doc.sources, 1)))
@@ -142,7 +148,7 @@ def to_markdown(doc: ExportDoc) -> str:
 def to_text(doc: ExportDoc) -> str:
     out = [doc.title, "=" * min(len(doc.title), 80)]
     if doc.show_date:
-        out.append(date.today().strftime("%B %-d, %Y"))
+        out.append(today_long())
     out.append("")
     if doc.plain:
         out.append(doc.body.strip())
@@ -218,7 +224,7 @@ def to_docx(doc: ExportDoc, path: Path) -> None:
     if doc.subtitle:
         meta.append(doc.subtitle)
     if doc.show_date:
-        meta.append(date.today().strftime("%B %-d, %Y"))
+        meta.append(today_long())
     if meta:
         p = d.add_paragraph()
         r = p.add_run(" · ".join(meta))
@@ -347,7 +353,7 @@ def to_pdf(doc: ExportDoc, path: Path) -> None:
     pdf.set_text_color(31, 41, 55)
     pdf.set_font(f, "B", 19)
     pdf.multi_cell(W, 9, clean(title))
-    meta = " · ".join(x for x in [doc.subtitle, date.today().strftime("%B %-d, %Y") if doc.show_date else None] if x)
+    meta = " · ".join(x for x in [doc.subtitle, today_long() if doc.show_date else None] if x)
     if meta:
         pdf.set_font(f, "", 9)
         pdf.set_text_color(107, 114, 128)

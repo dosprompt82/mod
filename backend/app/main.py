@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
+import time
+import urllib.request
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from logging.handlers import RotatingFileHandler
@@ -52,6 +55,20 @@ def _purge_staged(db) -> None:
     db.commit()
 
 
+def _open_browser_when_ready() -> None:
+    """Open the app in the default browser as soon as the server answers (used by start.bat)."""
+    import webbrowser
+
+    url = f"http://{settings.host}:{settings.port}"
+    for _ in range(120):
+        try:
+            urllib.request.urlopen(f"{url}/api/health", timeout=1)
+            webbrowser.open(url)
+            return
+        except OSError:
+            time.sleep(0.25)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     settings.ensure_dirs()
@@ -70,6 +87,8 @@ async def lifespan(_: FastAPI):
     finally:
         db.close()
     log.info("%s %s started (provider=%s)", APP_NAME, VERSION, settings.ai_provider)
+    if os.environ.get("PS_OPEN_BROWSER") == "1":
+        threading.Thread(target=_open_browser_when_ready, daemon=True).start()
     yield
 
 

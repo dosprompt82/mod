@@ -364,7 +364,8 @@ def test_anthropic_gives_up_after_bounded_retries(monkeypatch):
 def test_anthropic_error_mapping():
     for exc, code in [(anthropic.AuthenticationError("bad key", response=_resp(401), body=None), "auth"),
                       (anthropic.NotFoundError("no model", response=_resp(404), body=None), "model"),
-                      (anthropic.BadRequestError("prompt is too long", response=_resp(400), body=None), "too_large")]:
+                      (anthropic.BadRequestError("prompt is too long", response=_resp(400), body=None), "too_large"),
+                      (anthropic.BadRequestError("Your credit balance is too low to access the Anthropic API.", response=_resp(400), body=None), "no_credit")]:
         with pytest.raises(AIError) as e:
             AnthropicProvider("sk-test", "claude-x", client=FakeClient([exc])).complete(req())
         assert e.value.code == code and "sk-test" not in e.value.user_message

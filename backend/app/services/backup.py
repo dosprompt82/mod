@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
 import sqlite3
 import tempfile
 import zipfile
@@ -97,11 +96,16 @@ def restore_backup(data: bytes) -> dict:
             raise BackupError("This backup was made by a newer version of Personal Superpower. Update the app first, then restore it.")
         safety = create_backup("pre-restore")
         reset_engine()
-        for suffix in ("", "-wal", "-shm"):
-            p = Path(str(settings.db_path) + suffix)
-            if p.exists():
-                p.unlink()
-        shutil.copyfile(dbfile, settings.db_path)
+        # Copy the backup into the live database file in place. Unlike deleting and replacing the file,
+        # this works on Windows (which refuses to delete open files) and is safe with WAL journaling.
+        src = sqlite3.connect(dbfile)
+        dst = sqlite3.connect(settings.db_path)
+        try:
+            with dst:
+                src.backup(dst)
+        finally:
+            src.close()
+            dst.close()
         for f in settings.files_dir.glob("*"):
             if f.is_file():
                 f.unlink()

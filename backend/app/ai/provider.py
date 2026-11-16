@@ -143,6 +143,8 @@ class AnthropicProvider(AIProvider):
                 raise AIError(f"The model '{self.model}' was not found. Check the model identifier in Settings → AI Provider.", "model") from None
             except a.BadRequestError as e:
                 msg = str(getattr(e, "message", "") or e).lower()
+                if "credit balance" in msg or "billing" in msg:
+                    raise AIError("Your Anthropic account has no credit left. Add credit at console.anthropic.com → Billing, then try again.", "no_credit") from None
                 if use_fallbacks and ("fallback" in msg or "beta" in msg):
                     use_fallbacks = False
                     continue
